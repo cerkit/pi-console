@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace PiConsole
 {
@@ -13,6 +14,7 @@ namespace PiConsole
         private IMqttClient _mqttClient;
 
         public event EventHandler<string> MessageReceived;
+        public event EventHandler<string[]> MenuItemsReceived;
 
         public async Task StartAsync()
         {
@@ -48,6 +50,22 @@ namespace PiConsole
                 {
                     MessageReceived?.Invoke(this, payload);
                 }
+                else if (topic == "pi-console/menu/items")
+                {
+                    try
+                    {
+                        var items = JsonSerializer.Deserialize<MenuItem[]>(payload);
+                        if (items != null)
+                        {
+                            var sortedLabels = items.OrderBy(i => i.Id).Select(i => i.Label).ToArray();
+                            MenuItemsReceived?.Invoke(this, sortedLabels);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore parsing errors for now
+                    }
+                }
 
                 return Task.CompletedTask;
             };
@@ -56,6 +74,7 @@ namespace PiConsole
 
             var mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
                 .WithTopicFilter(f => f.WithTopic("test/signal"))
+                .WithTopicFilter(f => f.WithTopic("pi-console/menu/items"))
                 .Build();
 
             await _mqttClient.SubscribeAsync(mqttSubscribeOptions, System.Threading.CancellationToken.None);

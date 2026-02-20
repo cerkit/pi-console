@@ -1,0 +1,27 @@
+[
+    {
+        "id": 1,
+        "label": "System Status",
+        "icon": "info"
+    },
+    {
+        "id": 2,
+        "label": "Network Config",
+        "icon": "wifi"
+    },
+    {
+        "id": 3,
+        "label": "Sensor Logs",
+        "icon": "list"
+    },
+    {
+        "id": 4,
+        "label": "Device Settings",
+        "icon": "settings"
+    },
+    {
+        "id": 5,
+        "label": "Restart Service",
+        "icon": "refresh"
+    }
+]

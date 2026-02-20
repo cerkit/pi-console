@@ -7,12 +7,8 @@ namespace PiConsole
 {
     public class Engine
     {
-        private readonly string[] _menuItems = {
-            "Login",
-            "Message Board",
-            "File Library",
-            "SysOp Chat",
-            "Logoff"
+        private string[] _menuItems = {
+            "Waiting for menu items..."
         };
         private int _selectedIndex = 0;
         private bool _isRunning = true;
@@ -42,6 +38,14 @@ namespace PiConsole
                     mqttService.MessageReceived += (sender, msg) =>
                     {
                         layout["Footer"].Update(CreatePanel("Status Panel", msg));
+                        ctx.Refresh();
+                    };
+
+                    mqttService.MenuItemsReceived += (sender, items) =>
+                    {
+                        _menuItems = items;
+                        if (_selectedIndex >= _menuItems.Length) _selectedIndex = 0;
+                        layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
                         ctx.Refresh();
                     };
 
@@ -82,14 +86,20 @@ namespace PiConsole
                                 if (_selectedIndex >= _menuItems.Length) _selectedIndex = 0;
                                 break;
                             case ConsoleKey.Enter:
-                                if (_menuItems[_selectedIndex] == "Logoff")
+                                // Functionality disabled for now as requested
+                                /*
+                                if (_menuItems.Length > 0)
                                 {
-                                    _isRunning = false;
+                                    if (_menuItems[_selectedIndex] == "Logoff")
+                                    {
+                                        _isRunning = false;
+                                    }
+                                    else
+                                    {
+                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: {_menuItems[_selectedIndex]}"));
+                                    }
                                 }
-                                else
-                                {
-                                    layout["Output"].Update(CreatePanel("Output Panel", $"Selected: {_menuItems[_selectedIndex]}"));
-                                }
+                                */
                                 break;
                         }
                     }
