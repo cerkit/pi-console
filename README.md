@@ -43,8 +43,17 @@ pi-console is a .NET 10 console application that emulates the look and feel of a
 
 When the application is running:
 - Use the **Up/Down Arrow keys** to switch menu items.
-- Press **Enter** to select an item. It will be printed in the Output Panel.
-- Choose **Logoff** to exit the BBS application safely.
+- Keep in mind that execution logic for the `Enter` key on menu items is currently disabled.
+- **Dynamic Menus**: When the app starts, it publishes a message containing a GUID to the `pi-console/initialize` topic. 
+- You can dynamically render the menu by publishing a JSON array of `MenuItem` objects to the `pi-console/menu/items` topic.
+  - The menu sorts by `id` and allows displaying colored labels using Spectre.Console syntax based on the `color` node.
+  - Expected JSON format:
+    ```json
+    [
+      { "id": 1, "label": "System Status", "icon": "info", "color": "green" },
+      { "id": 2, "label": "Device Settings", "icon": "settings", "color": "purple" }
+    ]
+    ```
 - If messages are published to `test/signal` on your MQTT broker, they will appear dynamically in the System Status panel at the bottom.
 
 ## Technology Stack
