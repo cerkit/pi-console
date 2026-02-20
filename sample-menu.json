@@ -2,26 +2,31 @@
     {
         "id": 1,
         "label": "System Status",
-        "icon": "info"
+        "icon": "info",
+        "color": "green"
     },
     {
         "id": 2,
         "label": "Network Config",
-        "icon": "wifi"
+        "icon": "wifi",
+        "color": "blue"
     },
     {
         "id": 3,
         "label": "Sensor Logs",
-        "icon": "list"
+        "icon": "list",
+        "color": "yellow"
     },
     {
         "id": 4,
         "label": "Device Settings",
-        "icon": "settings"
+        "icon": "settings",
+        "color": "purple"
     },
     {
         "id": 5,
         "label": "Restart Service",
-        "icon": "refresh"
+        "icon": "refresh",
+        "color": "red"
     }
 ]

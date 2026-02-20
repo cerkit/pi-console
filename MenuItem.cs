@@ -12,5 +12,8 @@ namespace PiConsole
 
         [JsonPropertyName("icon")]
         public string Icon { get; set; } = string.Empty;
+
+        [JsonPropertyName("color")]
+        public string Color { get; set; } = "white"; // Default to white
     }
 }

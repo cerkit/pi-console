@@ -7,8 +7,8 @@ namespace PiConsole
 {
     public class Engine
     {
-        private string[] _menuItems = {
-            "Waiting for menu items..."
+        private MenuItem[] _menuItems = new MenuItem[] {
+            new MenuItem { Id = 0, Label = "Waiting for menu items...", Color = "grey" }
         };
         private int _selectedIndex = 0;
         private bool _isRunning = true;
@@ -54,6 +54,7 @@ namespace PiConsole
                         try 
                         {
                             await mqttService.StartAsync();
+                            await mqttService.PublishAsync("pi-console/initialize", "7f5407aa-cac5-4952-80ca-c73863d78fc4");
                         }
                         catch (Exception ex) 
                         {
@@ -90,13 +91,13 @@ namespace PiConsole
                                 /*
                                 if (_menuItems.Length > 0)
                                 {
-                                    if (_menuItems[_selectedIndex] == "Logoff")
+                                    if (_menuItems[_selectedIndex].Label == "Logoff")
                                     {
                                         _isRunning = false;
                                     }
                                     else
                                     {
-                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: {_menuItems[_selectedIndex]}"));
+                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: {_menuItems[_selectedIndex].Label}"));
                                     }
                                 }
                                 */
@@ -139,10 +140,10 @@ namespace PiConsole
 
             switch (title)
             {
-                case "Operations Panel":
+                case "Operations":
                     panel.BorderColor(Color.Orange1);
                     break;
-                case "Menu Panel":
+                case "Menu":
                     panel.BorderColor(Color.Blue);
                     break;
                 case "Output Panel":
@@ -156,7 +157,7 @@ namespace PiConsole
             return panel;
         }
 
-        private Panel CreateMenuPanel(string[] items, int selectedIndex)
+        private Panel CreateMenuPanel(MenuItem[] items, int selectedIndex)
         {
             var grid = new Grid().AddColumn(new GridColumn());
             grid.AddRow(new Markup("[blue]Menu Panel[/]").Centered());
@@ -164,13 +165,14 @@ namespace PiConsole
 
             for (int i = 0; i < items.Length; i++)
             {
+                string color = !string.IsNullOrEmpty(items[i].Color) ? items[i].Color : "white";
                 if (i == selectedIndex)
                 {
-                    grid.AddRow(new Markup($"[invert]> {items[i]} [/]"));
+                    grid.AddRow(new Markup($"[black on {color}]> {items[i].Label} [/]"));
                 }
                 else
                 {
-                    grid.AddRow(new Markup($"  {items[i]}"));
+                    grid.AddRow(new Markup($"[{color}]  {items[i].Label}[/]"));
                 }
             }
 

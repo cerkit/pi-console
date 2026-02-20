@@ -14,7 +14,7 @@ namespace PiConsole
         private IMqttClient _mqttClient;
 
         public event EventHandler<string> MessageReceived;
-        public event EventHandler<string[]> MenuItemsReceived;
+        public event EventHandler<MenuItem[]> MenuItemsReceived;
 
         public async Task StartAsync()
         {
@@ -23,9 +23,16 @@ namespace PiConsole
 
             string ipAddress = "127.0.0.1"; // default
             int port = 1883; // default
-            if (File.Exists("secrets.json"))
+            string secretsPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".secrets", "secrets.json");
+            if (!File.Exists(secretsPath))
             {
-                var json = File.ReadAllText("secrets.json");
+                // Fallback to relative if running in different environment
+                secretsPath = Path.Combine(".secrets", "secrets.json");
+            }
+
+            if (File.Exists(secretsPath))
+            {
+                var json = File.ReadAllText(secretsPath);
                 using var document = JsonDocument.Parse(json);
                 if (document.RootElement.TryGetProperty("MqttIpAddress", out var ipProp))
                 {
@@ -57,8 +64,8 @@ namespace PiConsole
                         var items = JsonSerializer.Deserialize<MenuItem[]>(payload);
                         if (items != null)
                         {
-                            var sortedLabels = items.OrderBy(i => i.Id).Select(i => i.Label).ToArray();
-                            MenuItemsReceived?.Invoke(this, sortedLabels);
+                            var sortedItems = items.OrderBy(i => i.Id).ToArray();
+                            MenuItemsReceived?.Invoke(this, sortedItems);
                         }
                     }
                     catch
@@ -78,6 +85,18 @@ namespace PiConsole
                 .Build();
 
             await _mqttClient.SubscribeAsync(mqttSubscribeOptions, System.Threading.CancellationToken.None);
+        }
+
+        public async Task PublishAsync(string topic, string payload)
+        {
+            if (_mqttClient != null && _mqttClient.IsConnected)
+            {
+                var message = new MqttApplicationMessageBuilder()
+                    .WithTopic(topic)
+                    .WithPayload(payload)
+                    .Build();
+                await _mqttClient.PublishAsync(message, System.Threading.CancellationToken.None);
+            }
         }
     }
 }

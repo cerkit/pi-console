@@ -1,4 +1,4 @@
-secrets.json
+.secrets/
 bin/
 obj/
 .DS_Store
