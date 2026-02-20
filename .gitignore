@@ -1,0 +1,4 @@
+secrets.json
+bin/
+obj/
+.DS_Store
