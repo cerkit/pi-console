@@ -53,7 +53,7 @@ namespace PiConsole
                 var topic = e.ApplicationMessage.Topic;
                 var payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
 
-                if (topic == "test/signal")
+                if (topic == "pi-console/status")
                 {
                     MessageReceived?.Invoke(this, payload);
                 }
@@ -80,7 +80,7 @@ namespace PiConsole
             await _mqttClient.ConnectAsync(mqttClientOptions, System.Threading.CancellationToken.None);
 
             var mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
-                .WithTopicFilter(f => f.WithTopic("test/signal"))
+                .WithTopicFilter(f => f.WithTopic("pi-console/status"))
                 .WithTopicFilter(f => f.WithTopic("pi-console/menu/items"))
                 .Build();
 

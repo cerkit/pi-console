@@ -54,7 +54,7 @@ When the application is running:
       { "id": 2, "label": "Device Settings", "icon": "settings", "color": "purple" }
     ]
     ```
-- If messages are published to `test/signal` on your MQTT broker, they will appear dynamically in the System Status panel at the bottom.
+- If messages are published to `pi-console/status` on your MQTT broker, they will appear dynamically in the System Status panel at the bottom.
 
 ## Technology Stack
 - **.NET 10**: Console Framework.
