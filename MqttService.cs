@@ -20,6 +20,7 @@ namespace PiConsole
             _mqttClient = mqttFactory.CreateMqttClient();
 
             string ipAddress = "127.0.0.1"; // default
+            int port = 1883; // default
             if (File.Exists("secrets.json"))
             {
                 var json = File.ReadAllText("secrets.json");
@@ -28,10 +29,14 @@ namespace PiConsole
                 {
                     ipAddress = ipProp.GetString() ?? ipAddress;
                 }
+                if (document.RootElement.TryGetProperty("MqttPort", out var portProp))
+                {
+                    port = portProp.GetInt32();
+                }
             }
 
             var mqttClientOptions = new MqttClientOptionsBuilder()
-                .WithTcpServer(ipAddress, 1883)
+                .WithTcpServer(ipAddress, port)
                 .Build();
 
             _mqttClient.ApplicationMessageReceivedAsync += e =>

@@ -25,10 +25,11 @@ pi-console is a .NET 10 console application that emulates the look and feel of a
    ```
 
 3. **Configure Secrets**:
-   Create a file named `secrets.json` in the root of the project to configure your MQTT Broker IP Address. It should look like this:
+   Create a file named `secrets.json` in the root of the project to configure your MQTT Broker IP Address and Port. It should look like this:
    ```json
    {
-     "MqttIpAddress": "[IP_ADDRESS]"
+     "MqttIpAddress": "[IP_ADDRESS]",
+     "MqttPort": 1883
    }
    ```
    *Note: This file is ignored by git.*
@@ -44,7 +45,7 @@ When the application is running:
 - Use the **Up/Down Arrow keys** to switch menu items.
 - Press **Enter** to select an item. It will be printed in the Output Panel.
 - Choose **Logoff** to exit the BBS application safely.
-- If messages are published to `text/signal` on your MQTT broker, they will appear dynamically in the System Status panel at the bottom.
+- If messages are published to `test/signal` on your MQTT broker, they will appear dynamically in the System Status panel at the bottom.
 
 ## Technology Stack
 - **.NET 10**: Console Framework.
