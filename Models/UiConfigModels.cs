@@ -36,5 +36,8 @@ namespace PiConsole.Models
 
         [JsonPropertyName("borderColor")]
         public string? BorderColor { get; set; }
+
+        [JsonPropertyName("titleColor")]
+        public string? TitleColor { get; set; }
     }
 }

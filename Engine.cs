@@ -187,11 +187,13 @@ namespace PiConsole
         {
             var config = _uiConfig?.HeaderPanel;
             string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
-            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
-            string endMarkup = borderColorName != null ? "[/]" : "";
+            string? titleColorName = !string.IsNullOrEmpty(config?.TitleColor) ? config.TitleColor : null;
+
+            string colorMarkup = titleColorName != null ? $"[{titleColorName}]" : "";
+            string endMarkup = titleColorName != null ? "[/]" : "";
 
             var figlet = new FigletText("PI-CONSOLE").Centered();
-            if (borderColorName != null) figlet.Color(GetBorderColor(borderColorName));
+            if (titleColorName != null) figlet.Color(GetBorderColor(titleColorName));
 
             var subtitle = new Markup($"{colorMarkup}v0.1-beta{endMarkup}").Centered();
 
@@ -211,8 +213,10 @@ namespace PiConsole
             var config = _uiConfig?.OperationsPanel;
             string title = !string.IsNullOrEmpty(config?.Title) ? config.Title : "Operations Panel";
             string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
-            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
-            string endMarkup = borderColorName != null ? "[/]" : "";
+            string? titleColorName = !string.IsNullOrEmpty(config?.TitleColor) ? config.TitleColor : null;
+
+            string colorMarkup = titleColorName != null ? $"[{titleColorName}]" : "";
+            string endMarkup = titleColorName != null ? "[/]" : "";
 
             string[] channels;
             lock (_channelsLock)
@@ -252,8 +256,10 @@ namespace PiConsole
             // Provide a fallback config logic generally 
             string title = !string.IsNullOrEmpty(config?.Title) ? config.Title : $"{panelKey} Panel";
             string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
-            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
-            string endMarkup = borderColorName != null ? "[/]" : "";
+            string? titleColorName = !string.IsNullOrEmpty(config?.TitleColor) ? config.TitleColor : null;
+
+            string colorMarkup = titleColorName != null ? $"[{titleColorName}]" : "";
+            string endMarkup = titleColorName != null ? "[/]" : "";
 
             var alignableContent = new Align(new Markup(content), HorizontalAlignment.Center, VerticalAlignment.Middle);
 
@@ -276,8 +282,10 @@ namespace PiConsole
             var config = _uiConfig?.MenuPanel;
             string title = !string.IsNullOrEmpty(config?.Title) ? config.Title : "Menu";
             string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
-            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
-            string endMarkup = borderColorName != null ? "[/]" : "";
+            string? titleColorName = !string.IsNullOrEmpty(config?.TitleColor) ? config.TitleColor : null;
+
+            string colorMarkup = titleColorName != null ? $"[{titleColorName}]" : "";
+            string endMarkup = titleColorName != null ? "[/]" : "";
 
             var grid = new Grid().AddColumn(new GridColumn());
 
