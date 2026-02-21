@@ -59,15 +59,19 @@ namespace PiConsole
                 {
                     MessageReceived?.Invoke(this, payload);
                 }
-                else if (topic == "pi-console/menu/items")
+                else if (topic == "pi-console/menu/items" || topic.StartsWith("pi-console/session/"))
                 {
                     try
                     {
-                        var items = JsonSerializer.Deserialize<MenuItem[]>(payload);
-                        if (items != null)
+                        // Safely ignore object payloads (like handshakes/acks) by checking if it looks like an array
+                        if (payload.TrimStart().StartsWith("["))
                         {
-                            var sortedItems = items.OrderBy(i => i.Id).ToArray();
-                            MenuItemsReceived?.Invoke(this, sortedItems);
+                            var items = JsonSerializer.Deserialize<MenuItem[]>(payload);
+                            if (items != null)
+                            {
+                                var sortedItems = items.OrderBy(i => i.Id).ToArray();
+                                MenuItemsReceived?.Invoke(this, sortedItems);
+                            }
                         }
                     }
                     catch
