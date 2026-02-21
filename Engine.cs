@@ -55,7 +55,7 @@ namespace PiConsole
                             new Layout("Menu", CreateMenuPanel(_menuItems, _selectedIndex)).Ratio(1),
                             new Layout("Output", CreatePanel("Output Panel", "")).Ratio(2)
                         ).Ratio(1),
-                    new Layout("Footer", CreatePanel("Status Panel", "[orange1]System idle.[/]")).Size(3)
+                    new Layout("Footer", CreatePanel("Status Panel", "System idle.")).Size(3)
                 );
 
             AnsiConsole.Live(layout)
@@ -70,7 +70,7 @@ namespace PiConsole
 
                     _mqttService.MessageReceived += (sender, msg) =>
                     {
-                        layout["Footer"].Update(CreatePanel("Status Panel", $"[orange1]{Markup.Escape(msg)}[/]"));
+                        layout["Footer"].Update(CreatePanel("Status Panel", msg));
                         ctx.Refresh();
                     };
 
@@ -92,7 +92,7 @@ namespace PiConsole
                         }
                         catch (Exception ex) 
                         {
-                            layout["Footer"].Update(CreatePanel("Status Panel", $"[orange1]MQTT connection failed:[/] {Markup.Escape(ex.Message)}"));
+                            layout["Footer"].Update(CreatePanel("Status Panel", $"[red]MQTT connection failed:[/] {Markup.Escape(ex.Message)}"));
                             ctx.Refresh();
                         }
                     });
@@ -135,7 +135,7 @@ namespace PiConsole
                                     }
                                     else
                                     {
-                                        layout["Output"].Update(CreatePanel("Output Panel", $"[orange1]Selected: [/][bold orange1]{Markup.Escape(item.Label)}[/]"));
+                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: {Markup.Escape(item.Label)}"));
                                         ctx.Refresh();
                                     }
                                 }
@@ -148,10 +148,9 @@ namespace PiConsole
         private IRenderable CreateBanner()
         {
             var figlet = new FigletText("PI-CONSOLE")
-                .Centered()
-                .Color(Color.Orange1);
+                .Centered();
 
-            var subtitle = new Markup("[black on orange1]v0.1-beta[/]").Centered();
+            var subtitle = new Markup("v0.1-beta").Centered();
 
             var grid = new Grid()
                 .AddColumn(new GridColumn().Centered())
@@ -159,7 +158,6 @@ namespace PiConsole
                 .AddRow(subtitle);
 
             return new Panel(grid)
-                .BorderColor(Color.Orange1)
                 .Padding(1, 1);
         }
 
@@ -174,24 +172,23 @@ namespace PiConsole
             var table = new Table()
                 .Expand()
                 .Border(TableBorder.None)
-                .AddColumn(new TableColumn("[orange1]Active Pi-Calculus Channels[/]").Centered());
+                .AddColumn(new TableColumn("Active Pi-Calculus Channels").Centered());
 
             if (channels.Length == 0)
             {
-                table.AddRow("[orange1]No active channels...[/]");
+                table.AddRow("No active channels...");
             }
             else
             {
                 foreach (var channel in channels)
                 {
-                    table.AddRow($"[orange1]{Markup.Escape(channel)}[/]");
+                    table.AddRow($"{Markup.Escape(channel)}");
                 }
             }
 
             return new Panel(table)
                 .Expand()
-                .Border(BoxBorder.Square)
-                .BorderColor(Color.Orange1);
+                .Border(BoxBorder.Square);
         }
 
         private Panel CreatePanel(string title, string content)
@@ -200,28 +197,12 @@ namespace PiConsole
 
             if (string.IsNullOrEmpty(content))
             {
-                alignableContent = new Align(new Markup($"[orange1]{Markup.Escape(title)}[/]"), HorizontalAlignment.Center, VerticalAlignment.Middle);
+                alignableContent = new Align(new Markup(title), HorizontalAlignment.Center, VerticalAlignment.Middle);
             }
 
             var panel = new Panel(alignableContent)
                 .Expand()
                 .Border(BoxBorder.Square);
-
-            switch (title)
-            {
-                case "Menu":
-                    panel.BorderColor(Color.Orange1);
-                    break;
-                case "Output Panel":
-                    panel.BorderColor(Color.Orange1);
-                    break;
-                case "Status Panel":
-                    panel.BorderColor(Color.Orange1);
-                    break;
-                default:
-                    panel.BorderColor(Color.Orange1);
-                    break;
-            }
 
             return panel;
         }
@@ -232,40 +213,51 @@ namespace PiConsole
 
             for (int i = 0; i < items.Length; i++)
             {
-                string color = !string.IsNullOrEmpty(items[i].Color) ? items[i].Color : "orange1";
-                // Fix common invalid Spectre colors
-                if (color.ToLower() == "orange") color = "orange1";
+                string? color = !string.IsNullOrEmpty(items[i].Color) ? items[i].Color : null;
 
                 try 
                 {
-                    if (i == selectedIndex)
+                    if (color != null)
                     {
-                        grid.AddRow(new Markup($"[black on {color}]> {Markup.Escape(items[i].Label)} [/]"));
-                    }
-                    else
+                        if (i == selectedIndex)
+                        {
+                            grid.AddRow(new Markup($"[black on {color}]> {Markup.Escape(items[i].Label)} [/]"));
+                        }
+                        else
+                        {
+                            grid.AddRow(new Markup($"[{color}]  {Markup.Escape(items[i].Label)}[/]"));
+                        }
+                    } 
+                    else 
                     {
-                        grid.AddRow(new Markup($"[{color}]  {Markup.Escape(items[i].Label)}[/]"));
+                        if (i == selectedIndex)
+                        {
+                            grid.AddRow(new Markup($"[invert]> {Markup.Escape(items[i].Label)} [/]"));
+                        }
+                        else
+                        {
+                            grid.AddRow(new Markup($"  {Markup.Escape(items[i].Label)}"));
+                        }
                     }
                 }
                 catch 
                 {
-                    // Fallback to orange1 if the color name is invalid in Spectre.Console
+                    // Fallback to default styling if the color name is invalid in Spectre.Console
                     if (i == selectedIndex)
                     {
-                        grid.AddRow(new Markup($"[black on orange1]> {Markup.Escape(items[i].Label)} [/]"));
+                        grid.AddRow(new Markup($"[invert]> {Markup.Escape(items[i].Label)} [/]"));
                     }
                     else
                     {
-                        grid.AddRow(new Markup($"[orange1]  {Markup.Escape(items[i].Label)}[/]"));
+                        grid.AddRow(new Markup($"  {Markup.Escape(items[i].Label)}"));
                     }
                 }
             }
 
             return new Panel(new Align(grid, HorizontalAlignment.Center, VerticalAlignment.Middle))
-                .Header("[orange1]Menu[/]", Justify.Center)
+                .Header("Menu", Justify.Center)
                 .Expand()
-                .Border(BoxBorder.Square)
-                .BorderColor(Color.Orange1);
+                .Border(BoxBorder.Square);
         }
     }
 }

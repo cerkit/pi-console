@@ -3,30 +3,30 @@
         "id": 1,
         "label": "System Status",
         "icon": "info",
-        "color": "orange1"
+        "color": ""
     },
     {
         "id": 2,
         "label": "Network Config",
         "icon": "wifi",
-        "color": "orange1"
+        "color": ""
     },
     {
         "id": 3,
         "label": "Sensor Logs",
         "icon": "list",
-        "color": "orange1"
+        "color": ""
     },
     {
         "id": 4,
         "label": "Device Settings",
         "icon": "settings",
-        "color": "orange1"
+        "color": ""
     },
     {
         "id": 5,
-        "label": "Restart Service",
+        "label": "Logoff",
         "icon": "refresh",
-        "color": "orange1"
+        "color": ""
     }
 ]
