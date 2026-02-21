@@ -7,9 +7,7 @@ namespace PiConsole
 {
     public class Engine
     {
-        private MenuItem[] _menuItems = new MenuItem[] {
-            new MenuItem { Id = 0, Label = "Waiting for menu items...", Color = "grey" }
-        };
+        private MenuItem[] _menuItems = Array.Empty<MenuItem>();
         private string[] _activeChannels = Array.Empty<string>();
         private readonly object _channelsLock = new object();
 
@@ -57,7 +55,7 @@ namespace PiConsole
                             new Layout("Menu", CreateMenuPanel(_menuItems, _selectedIndex)).Ratio(1),
                             new Layout("Output", CreatePanel("Output Panel", "")).Ratio(2)
                         ).Ratio(1),
-                    new Layout("Footer", CreatePanel("Status Panel", "System idle.")).Size(3)
+                    new Layout("Footer", CreatePanel("Status Panel", "[orange1]System idle.[/]")).Size(3)
                 );
 
             AnsiConsole.Live(layout)
@@ -72,7 +70,7 @@ namespace PiConsole
 
                     _mqttService.MessageReceived += (sender, msg) =>
                     {
-                        layout["Footer"].Update(CreatePanel("Status Panel", msg));
+                        layout["Footer"].Update(CreatePanel("Status Panel", $"[orange1]{Markup.Escape(msg)}[/]"));
                         ctx.Refresh();
                     };
 
@@ -89,11 +87,12 @@ namespace PiConsole
                         try 
                         {
                             await _mqttService.StartAsync();
+                            await Task.Delay(500); // Give subscriptions a moment to establish
                             await _mqttService.PublishAsync("pi-console/client/startup", "");
                         }
                         catch (Exception ex) 
                         {
-                            layout["Footer"].Update(CreatePanel("Status Panel", $"[red]MQTT connection failed:[/] {Markup.Escape(ex.Message)}"));
+                            layout["Footer"].Update(CreatePanel("Status Panel", $"[orange1]MQTT connection failed:[/] {Markup.Escape(ex.Message)}"));
                             ctx.Refresh();
                         }
                     });
@@ -136,7 +135,7 @@ namespace PiConsole
                                     }
                                     else
                                     {
-                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: [bold yellow]{Markup.Escape(item.Label)}[/]"));
+                                        layout["Output"].Update(CreatePanel("Output Panel", $"[orange1]Selected: [/][bold orange1]{Markup.Escape(item.Label)}[/]"));
                                         ctx.Refresh();
                                     }
                                 }
@@ -150,9 +149,9 @@ namespace PiConsole
         {
             var figlet = new FigletText("PI-CONSOLE")
                 .Centered()
-                .Color(Color.White);
+                .Color(Color.Orange1);
 
-            var subtitle = new Markup("v0.1-beta").Centered();
+            var subtitle = new Markup("[black on orange1]v0.1-beta[/]").Centered();
 
             var grid = new Grid()
                 .AddColumn(new GridColumn().Centered())
@@ -160,7 +159,7 @@ namespace PiConsole
                 .AddRow(subtitle);
 
             return new Panel(grid)
-                .BorderColor(Color.Purple)
+                .BorderColor(Color.Orange1)
                 .Padding(1, 1);
         }
 
@@ -179,13 +178,13 @@ namespace PiConsole
 
             if (channels.Length == 0)
             {
-                table.AddRow("[grey]No active channels...[/]");
+                table.AddRow("[orange1]No active channels...[/]");
             }
             else
             {
                 foreach (var channel in channels)
                 {
-                    table.AddRow($"[green]{Markup.Escape(channel)}[/]");
+                    table.AddRow($"[orange1]{Markup.Escape(channel)}[/]");
                 }
             }
 
@@ -201,7 +200,7 @@ namespace PiConsole
 
             if (string.IsNullOrEmpty(content))
             {
-                alignableContent = new Align(new Markup(title), HorizontalAlignment.Center, VerticalAlignment.Middle);
+                alignableContent = new Align(new Markup($"[orange1]{Markup.Escape(title)}[/]"), HorizontalAlignment.Center, VerticalAlignment.Middle);
             }
 
             var panel = new Panel(alignableContent)
@@ -211,13 +210,16 @@ namespace PiConsole
             switch (title)
             {
                 case "Menu":
-                    panel.BorderColor(Color.Blue);
+                    panel.BorderColor(Color.Orange1);
                     break;
                 case "Output Panel":
-                    panel.BorderColor(Color.Green);
+                    panel.BorderColor(Color.Orange1);
+                    break;
+                case "Status Panel":
+                    panel.BorderColor(Color.Orange1);
                     break;
                 default:
-                    panel.BorderColor(Color.Grey);
+                    panel.BorderColor(Color.Orange1);
                     break;
             }
 
@@ -227,26 +229,43 @@ namespace PiConsole
         private Panel CreateMenuPanel(MenuItem[] items, int selectedIndex)
         {
             var grid = new Grid().AddColumn(new GridColumn());
-            grid.AddRow(new Markup("[blue]Menu[/]").Centered());
-            grid.AddRow(new Text("")); 
 
             for (int i = 0; i < items.Length; i++)
             {
-                string color = !string.IsNullOrEmpty(items[i].Color) ? items[i].Color : "white";
-                if (i == selectedIndex)
+                string color = !string.IsNullOrEmpty(items[i].Color) ? items[i].Color : "orange1";
+                // Fix common invalid Spectre colors
+                if (color.ToLower() == "orange") color = "orange1";
+
+                try 
                 {
-                    grid.AddRow(new Markup($"[black on {color}]> {items[i].Label} [/]"));
+                    if (i == selectedIndex)
+                    {
+                        grid.AddRow(new Markup($"[black on {color}]> {Markup.Escape(items[i].Label)} [/]"));
+                    }
+                    else
+                    {
+                        grid.AddRow(new Markup($"[{color}]  {Markup.Escape(items[i].Label)}[/]"));
+                    }
                 }
-                else
+                catch 
                 {
-                    grid.AddRow(new Markup($"[{color}]  {items[i].Label}[/]"));
+                    // Fallback to orange1 if the color name is invalid in Spectre.Console
+                    if (i == selectedIndex)
+                    {
+                        grid.AddRow(new Markup($"[black on orange1]> {Markup.Escape(items[i].Label)} [/]"));
+                    }
+                    else
+                    {
+                        grid.AddRow(new Markup($"[orange1]  {Markup.Escape(items[i].Label)}[/]"));
+                    }
                 }
             }
 
             return new Panel(new Align(grid, HorizontalAlignment.Center, VerticalAlignment.Middle))
+                .Header("[orange1]Menu[/]", Justify.Center)
                 .Expand()
                 .Border(BoxBorder.Square)
-                .BorderColor(Color.Blue);
+                .BorderColor(Color.Orange1);
         }
     }
 }

@@ -65,8 +65,8 @@ This application utilizes a "channel mobility" system for MQTT communication. Al
   - Expected JSON format for a menu array:
     ```json
     [
-      { "id": 1, "label": "System Status", "icon": "info", "color": "green" },
-      { "id": 2, "label": "Device Settings", "icon": "settings", "color": "purple" }
+      { "id": 1, "label": "System Status", "icon": "info", "color": "orange1" },
+      { "id": 2, "label": "Device Settings", "icon": "settings", "color": "orange1" }
     ]
     ```
 
