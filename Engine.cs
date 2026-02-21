@@ -89,7 +89,7 @@ namespace PiConsole
                         try 
                         {
                             await _mqttService.StartAsync();
-                            await _mqttService.PublishAsync("pi-console/initialize", "7f5407aa-cac5-4952-80ca-c73863d78fc4");
+                            await _mqttService.PublishAsync("pi-console/client/startup", "");
                         }
                         catch (Exception ex) 
                         {
@@ -127,20 +127,19 @@ namespace PiConsole
                                 _isRunning = false;
                                 break;
                             case ConsoleKey.Enter:
-                                // Functionality disabled for now as requested
-                                /*
-                                if (_menuItems.Length > 0)
+                                if (_menuItems.Length > 0 && _selectedIndex >= 0 && _selectedIndex < _menuItems.Length)
                                 {
-                                    if (_menuItems[_selectedIndex].Label == "Logoff")
+                                    var item = _menuItems[_selectedIndex];
+                                    if (item.Label == "Logoff" || item.Label == "Exit")
                                     {
                                         _isRunning = false;
                                     }
                                     else
                                     {
-                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: {_menuItems[_selectedIndex].Label}"));
+                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: [bold yellow]{Markup.Escape(item.Label)}[/]"));
+                                        ctx.Refresh();
                                     }
                                 }
-                                */
                                 break;
                         }
                     }
