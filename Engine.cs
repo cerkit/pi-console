@@ -10,12 +10,41 @@ namespace PiConsole
         private MenuItem[] _menuItems = new MenuItem[] {
             new MenuItem { Id = 0, Label = "Waiting for menu items...", Color = "grey" }
         };
+        private string[] _activeChannels = Array.Empty<string>();
+        private readonly object _channelsLock = new object();
+
         private int _selectedIndex = 0;
         private bool _isRunning = true;
+        private readonly MqttService _mqttService;
+        private Action _refreshUi;
+
+        public Engine(MqttService mqttService)
+        {
+            _mqttService = mqttService;
+        }
+
+        public void AddActiveChannel(string channelName)
+        {
+            var added = false;
+            lock (_channelsLock)
+            {
+                var list = new System.Collections.Generic.List<string>(_activeChannels);
+                if (!list.Contains(channelName))
+                {
+                    list.Add(channelName);
+                    _activeChannels = list.ToArray();
+                    added = true;
+                }
+            }
+
+            if (added && _refreshUi != null)
+            {
+                _refreshUi.Invoke();
+            }
+        }
 
         public void Run()
         {
-            var mqttService = new MqttService();
             Console.Title = "pi-console";
             AnsiConsole.Clear();
 
@@ -35,13 +64,19 @@ namespace PiConsole
                 .Overflow(VerticalOverflow.Crop)
                 .Start(ctx =>
                 {
-                    mqttService.MessageReceived += (sender, msg) =>
+                    _refreshUi = () => 
+                    {
+                        layout["Operations"].Update(CreateOperationsPanel());
+                        ctx.Refresh();
+                    };
+
+                    _mqttService.MessageReceived += (sender, msg) =>
                     {
                         layout["Footer"].Update(CreatePanel("Status Panel", msg));
                         ctx.Refresh();
                     };
 
-                    mqttService.MenuItemsReceived += (sender, items) =>
+                    _mqttService.MenuItemsReceived += (sender, items) =>
                     {
                         _menuItems = items;
                         if (_selectedIndex >= _menuItems.Length) _selectedIndex = 0;
@@ -53,8 +88,8 @@ namespace PiConsole
                     {
                         try 
                         {
-                            await mqttService.StartAsync();
-                            await mqttService.PublishAsync("pi-console/initialize", "7f5407aa-cac5-4952-80ca-c73863d78fc4");
+                            await _mqttService.StartAsync();
+                            await _mqttService.PublishAsync("pi-console/initialize", "7f5407aa-cac5-4952-80ca-c73863d78fc4");
                         }
                         catch (Exception ex) 
                         {
@@ -66,6 +101,7 @@ namespace PiConsole
                     while (_isRunning)
                     {
                         // Refresh layout elements
+                        layout["Operations"].Update(CreateOperationsPanel());
                         layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
                         ctx.Refresh();
 
@@ -85,6 +121,10 @@ namespace PiConsole
                             case ConsoleKey.DownArrow:
                                 _selectedIndex++;
                                 if (_selectedIndex >= _menuItems.Length) _selectedIndex = 0;
+                                break;
+                            case ConsoleKey.Q:
+                            case ConsoleKey.Escape:
+                                _isRunning = false;
                                 break;
                             case ConsoleKey.Enter:
                                 // Functionality disabled for now as requested
@@ -125,6 +165,37 @@ namespace PiConsole
                 .Padding(1, 1);
         }
 
+        private Panel CreateOperationsPanel()
+        {
+            string[] channels;
+            lock (_channelsLock)
+            {
+                channels = _activeChannels;
+            }
+
+            var table = new Table()
+                .Expand()
+                .Border(TableBorder.None)
+                .AddColumn(new TableColumn("[orange1]Active Pi-Calculus Channels[/]").Centered());
+
+            if (channels.Length == 0)
+            {
+                table.AddRow("[grey]No active channels...[/]");
+            }
+            else
+            {
+                foreach (var channel in channels)
+                {
+                    table.AddRow($"[green]{Markup.Escape(channel)}[/]");
+                }
+            }
+
+            return new Panel(table)
+                .Expand()
+                .Border(BoxBorder.Square)
+                .BorderColor(Color.Orange1);
+        }
+
         private Panel CreatePanel(string title, string content)
         {
             var alignableContent = new Align(new Markup(content), HorizontalAlignment.Center, VerticalAlignment.Middle);
@@ -140,9 +211,6 @@ namespace PiConsole
 
             switch (title)
             {
-                case "Operations":
-                    panel.BorderColor(Color.Orange1);
-                    break;
                 case "Menu":
                     panel.BorderColor(Color.Blue);
                     break;

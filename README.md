@@ -43,6 +43,7 @@ pi-console is a .NET 10 console application that emulates the look and feel of a
 
 When the application is running:
 - Use the **Up/Down Arrow keys** to switch menu items.
+- Press **Q** or **Escape** to log off and exit the BBS application safely.
 - Keep in mind that execution logic for the `Enter` key on menu items is currently disabled.
 - **Dynamic Menus**: When the app starts, it publishes a message containing a GUID to the `pi-console/initialize` topic. 
 - You can dynamically render the menu by publishing a JSON array of `MenuItem` objects to the `pi-console/menu/items` topic.
