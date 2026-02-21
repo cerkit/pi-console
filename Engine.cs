@@ -15,11 +15,18 @@ namespace PiConsole
         private int _selectedIndex = 0;
         private bool _isRunning = true;
         private readonly MqttService _mqttService;
+        
+        // Refresh actions
         private Action? _refreshUi;
+        private Action? _refreshOutput;
+        private Action? _refreshOperations;
 
         private string _lastOutputContent = "";
         private string _lastStatusContent = "System idle.";
         private UiConfigData? _uiConfig;
+        
+        // Track the current active dynamic session channel for executing Actions
+        private string _currentSessionChannel = string.Empty;
 
         public Engine(MqttService mqttService)
         {
@@ -39,6 +46,20 @@ namespace PiConsole
             _refreshUi?.Invoke();
         }
 
+        public void UpdatePanel(string targetPanel, string content)
+        {
+            if (targetPanel.Equals("outputPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastOutputContent = content;
+                _refreshOutput?.Invoke();
+            }
+            else if (targetPanel.Equals("operationsPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                // Optionally handle other specific panel data here if you decouple operations tracking natively
+                _refreshOperations?.Invoke();
+            }
+        }
+
         public void AddActiveChannel(string channelName)
         {
             var added = false;
@@ -50,6 +71,12 @@ namespace PiConsole
                     list.Add(channelName);
                     _activeChannels = list.ToArray();
                     added = true;
+                    
+                    // Track explicitly for ActionTopic payloads
+                    if (channelName.StartsWith("pi-console/session/"))
+                    {
+                        _currentSessionChannel = channelName;
+                    }
                 }
             }
 
@@ -87,6 +114,18 @@ namespace PiConsole
                         layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
                         layout["Output"].Update(CreatePanel("Output", _lastOutputContent));
                         layout["Footer"].Update(CreatePanel("Status", _lastStatusContent));
+                        ctx.Refresh();
+                    };
+
+                    _refreshOutput = () =>
+                    {
+                        layout["Output"].Update(CreatePanel("Output", _lastOutputContent));
+                        ctx.Refresh();
+                    };
+
+                    _refreshOperations = () => 
+                    {
+                        layout["Operations"].Update(CreateOperationsPanel());
                         ctx.Refresh();
                     };
 
@@ -152,8 +191,27 @@ namespace PiConsole
                                     }
                                     else
                                     {
-                                        _lastOutputContent = $"Selected: {Markup.Escape(item.Label)}";
-                                        _refreshUi?.Invoke();
+                                        _lastOutputContent = $"Executing: {Markup.Escape(item.Label)}...";
+                                        _refreshOutput?.Invoke();
+
+                                        if (!string.IsNullOrEmpty(item.ActionTopic))
+                                        {
+                                            // Execute dynamic action off UI thread
+                                            _ = Task.Run(async () =>
+                                            {
+                                                try
+                                                {
+                                                    var payload = new { sessionChannel = _currentSessionChannel };
+                                                    var jsonPayload = System.Text.Json.JsonSerializer.Serialize(payload);
+                                                    await _mqttService.PublishAsync(item.ActionTopic, jsonPayload);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    _lastStatusContent = $"[red]Action err:[/] {Markup.Escape(ex.Message)}";
+                                                    _refreshUi?.Invoke();
+                                                }
+                                            });
+                                        }
                                     }
                                 }
                                 break;
