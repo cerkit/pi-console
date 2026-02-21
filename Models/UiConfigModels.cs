@@ -40,4 +40,13 @@ namespace PiConsole.Models
         [JsonPropertyName("titleColor")]
         public string? TitleColor { get; set; }
     }
+
+    public class PanelUpdateData
+    {
+        [JsonPropertyName("targetPanel")]
+        public string? TargetPanel { get; set; }
+
+        [JsonPropertyName("content")]
+        public string? Content { get; set; }
+    }
 }

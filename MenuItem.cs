@@ -15,5 +15,11 @@ namespace PiConsole
 
         [JsonPropertyName("color")]
         public string Color { get; set; } = string.Empty; // Default to terminal scheme
+
+        [JsonPropertyName("actionTopic")]
+        public string? ActionTopic { get; set; }
+
+        [JsonPropertyName("action")]
+        public string? Action { get; set; }
     }
 }

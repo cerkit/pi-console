@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using PiConsole.Models;
+using Spectre.Console;
 
 namespace PiConsole
 {
@@ -90,11 +91,34 @@ namespace PiConsole
                                     _engine.UpdateMenu(menuItems);
                                 }
                             }
+                            else if (sessionMsg.MessageType == "PanelUpdate" && sessionMsg.Data != null)
+                            {
+                                string rawJson = "";
+                                if (sessionMsg.Data is JsonElement dataElement)
+                                {
+                                    rawJson = dataElement.GetRawText();
+                                }
+                                else
+                                {
+                                    rawJson = sessionMsg.Data.ToString() ?? "{}";
+                                }
+
+                                var updateData = JsonSerializer.Deserialize<PanelUpdateData>(rawJson);
+                                if (updateData != null && !string.IsNullOrEmpty(updateData.TargetPanel) && !string.IsNullOrEmpty(updateData.Content))
+                                {
+                                    _engine.UpdatePanel(updateData.TargetPanel, updateData.Content);
+                                }
+                                else
+                                {
+                                    _engine.UpdatePanel("outputPanel", $"[red]Failed to parse PanelUpdate:[/] JSON: {Markup.Escape(rawJson)}");
+                                }
+                            }
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Ignore parse errors on other messages
+                        // Fallback debug to status
+                        _engine.UpdatePanel("outputPanel", $"[red]Parser Err:[/] {Markup.Escape(ex.Message)}");
                     }
                 }
             };

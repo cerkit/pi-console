@@ -15,11 +15,24 @@ namespace PiConsole
         private int _selectedIndex = 0;
         private bool _isRunning = true;
         private readonly MqttService _mqttService;
+        
+        // Refresh actions
         private Action? _refreshUi;
+        private Action? _refreshOutput;
+        private Action? _refreshOperations;
+        private Action? _refreshStatus;
+        private Action? _refreshHeader;
+        private Action? _refreshMenu;
 
         private string _lastOutputContent = "";
+        private string _lastOperationsContent = "";
         private string _lastStatusContent = "System idle.";
+        private string _lastHeaderContent = "";
+        private string _lastMenuContent = "";
         private UiConfigData? _uiConfig;
+        
+        // Track the current active dynamic session channel for executing Actions
+        private string _currentSessionChannel = string.Empty;
 
         public Engine(MqttService mqttService)
         {
@@ -39,6 +52,64 @@ namespace PiConsole
             _refreshUi?.Invoke();
         }
 
+        public void UpdatePanel(string targetPanel, string content)
+        {
+            if (targetPanel.Equals("commandProcessor", StringComparison.OrdinalIgnoreCase))
+            {
+                switch (content.ToUpperInvariant())
+                {
+                    case "EXIT":
+                        _isRunning = false;
+                        Environment.Exit(0);
+                        break;
+                    case "RESTART":
+                        _lastStatusContent = "Restarting UI configuration sequence...";
+                        _refreshStatus?.Invoke();
+
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _mqttService.PublishAsync("pi-console/client/startup", "{ \"status\": \"online\" }");
+                            }
+                            catch (Exception ex)
+                            {
+                                _lastStatusContent = $"[red]Restart err:[/] {Markup.Escape(ex.Message)}";
+                                _refreshUi?.Invoke();
+                            }
+                        });
+                        break;
+                }
+                return;
+            }
+
+            if (targetPanel.Equals("outputPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastOutputContent = content;
+                _refreshOutput?.Invoke();
+            }
+            else if (targetPanel.Equals("operationsPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastOperationsContent = content;
+                _refreshOperations?.Invoke();
+            }
+            else if (targetPanel.Equals("statusPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastStatusContent = content;
+                _refreshStatus?.Invoke();
+            }
+            else if (targetPanel.Equals("headerPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastHeaderContent = content;
+                _refreshHeader?.Invoke();
+            }
+            else if (targetPanel.Equals("menuPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastMenuContent = content;
+                _refreshMenu?.Invoke();
+            }
+        }
+
         public void AddActiveChannel(string channelName)
         {
             var added = false;
@@ -50,6 +121,12 @@ namespace PiConsole
                     list.Add(channelName);
                     _activeChannels = list.ToArray();
                     added = true;
+                    
+                    // Track explicitly for ActionTopic payloads
+                    if (channelName.StartsWith("pi-console/session/"))
+                    {
+                        _currentSessionChannel = channelName;
+                    }
                 }
             }
 
@@ -87,6 +164,36 @@ namespace PiConsole
                         layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
                         layout["Output"].Update(CreatePanel("Output", _lastOutputContent));
                         layout["Footer"].Update(CreatePanel("Status", _lastStatusContent));
+                        ctx.Refresh();
+                    };
+
+                    _refreshOutput = () =>
+                    {
+                        layout["Output"].Update(CreatePanel("Output", _lastOutputContent));
+                        ctx.Refresh();
+                    };
+
+                    _refreshOperations = () => 
+                    {
+                        layout["Operations"].Update(CreateOperationsPanel());
+                        ctx.Refresh();
+                    };
+
+                    _refreshStatus = () =>
+                    {
+                        layout["Footer"].Update(CreatePanel("Status", _lastStatusContent));
+                        ctx.Refresh();
+                    };
+
+                    _refreshHeader = () =>
+                    {
+                        layout["Header"].Update(CreateBanner());
+                        ctx.Refresh();
+                    };
+
+                    _refreshMenu = () =>
+                    {
+                        layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
                         ctx.Refresh();
                     };
 
@@ -152,8 +259,29 @@ namespace PiConsole
                                     }
                                     else
                                     {
-                                        _lastOutputContent = $"Selected: {Markup.Escape(item.Label)}";
-                                        _refreshUi?.Invoke();
+                                        _lastOutputContent = $"Executing: {Markup.Escape(item.Label)}...";
+                                        _refreshOutput?.Invoke();
+
+                                        string? targetActionTopic = !string.IsNullOrEmpty(item.ActionTopic) ? item.ActionTopic : item.Action;
+
+                                        if (!string.IsNullOrEmpty(targetActionTopic))
+                                        {
+                                            // Execute dynamic action off UI thread
+                                            _ = Task.Run(async () =>
+                                            {
+                                                try
+                                                {
+                                                    var payload = new { sessionChannel = _currentSessionChannel };
+                                                    var jsonPayload = System.Text.Json.JsonSerializer.Serialize(payload);
+                                                    await _mqttService.PublishAsync(targetActionTopic, jsonPayload);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    _lastStatusContent = $"[red]Action err:[/] {Markup.Escape(ex.Message)}";
+                                                    _refreshUi?.Invoke();
+                                                }
+                                            });
+                                        }
                                     }
                                 }
                                 break;
@@ -196,7 +324,8 @@ namespace PiConsole
             var figlet = new FigletText(title).Centered();
             if (titleColorName != null) figlet.Color(GetBorderColor(titleColorName));
 
-            var subtitle = new Markup($"{colorMarkup}v0.1-beta{endMarkup}").Centered();
+            string subtitleText = !string.IsNullOrEmpty(_lastHeaderContent) ? _lastHeaderContent : "v0.1-beta";
+            var subtitle = new Markup($"{colorMarkup}{subtitleText}{endMarkup}").Centered();
 
             var grid = new Grid()
                 .AddColumn(new GridColumn().Centered())
@@ -233,6 +362,13 @@ namespace PiConsole
                 .Expand()
                 .Border(TableBorder.None)
                 .AddColumn(new TableColumn($"{colorMarkup}{Markup.Escape(title)}{endMarkup}").Centered());
+
+            if (!string.IsNullOrEmpty(_lastOperationsContent))
+            {
+                // Insert the dynamic payload string first
+                table.AddRow(new Markup(_lastOperationsContent));
+                table.AddEmptyRow();
+            }
 
             if (channels.Length == 0)
             {
@@ -300,6 +436,12 @@ namespace PiConsole
             string endMarkup = titleColorName != null ? "[/]" : "";
 
             var grid = new Grid().AddColumn(new GridColumn());
+
+            if (!string.IsNullOrEmpty(_lastMenuContent))
+            {
+                grid.AddRow(new Markup(_lastMenuContent));
+                grid.AddEmptyRow();
+            }
 
             for (int i = 0; i < items.Length; i++)
             {
