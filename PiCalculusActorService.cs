@@ -44,18 +44,21 @@ namespace PiConsole
                         if (root.TryGetProperty("action", out var actionElement) && actionElement.GetString() == "CONNECT" &&
                             root.TryGetProperty("replyToChannel", out var replyElement))
                         {
-                            string replyToChannel = replyElement.GetString();
+                            string? replyToChannel = replyElement.GetString();
+                            
+                            if (!string.IsNullOrEmpty(replyToChannel))
+                            {
+                                // Subscribe dynamically to the reply-to channel
+                                await _mqttService.SubscribeAsync(replyToChannel);
 
-                            // Subscribe dynamically to the reply-to channel
-                            await _mqttService.SubscribeAsync(replyToChannel);
+                                // Notify UI through the Engine
+                                _engine.AddActiveChannel(replyToChannel);
 
-                            // Notify UI through the Engine
-                            _engine.AddActiveChannel(replyToChannel);
-
-                            // Send ACK payload back to the new channel
-                            var ackResponse = new { status = "ACK", client = "dotnet-console" };
-                            var jsonAck = JsonSerializer.Serialize(ackResponse);
-                            await _mqttService.PublishAsync(replyToChannel, jsonAck);
+                                // Send ACK payload back to the new channel
+                                var ackResponse = new { status = "ACK", client = "dotnet-console" };
+                                var jsonAck = JsonSerializer.Serialize(ackResponse);
+                                await _mqttService.PublishAsync(replyToChannel, jsonAck);
+                            }
                         }
                     }
                     catch

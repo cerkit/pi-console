@@ -14,7 +14,7 @@ namespace PiConsole
         private int _selectedIndex = 0;
         private bool _isRunning = true;
         private readonly MqttService _mqttService;
-        private Action _refreshUi;
+        private Action? _refreshUi;
 
         public Engine(MqttService mqttService)
         {

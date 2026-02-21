@@ -42,7 +42,7 @@ namespace PiConsole
                         if (root.TryGetProperty("action", out var actionElement) && actionElement.GetString() == "PROVIDE_MENU" &&
                             root.TryGetProperty("channel", out var channelElement))
                         {
-                            string channel = channelElement.GetString();
+                            string? channel = channelElement.GetString();
                             if (!string.IsNullOrEmpty(channel))
                             {
                                 // Subscribe dynamically to the dynamic menu channel

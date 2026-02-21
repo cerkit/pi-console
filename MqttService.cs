@@ -11,12 +11,12 @@ namespace PiConsole
 {
     public class MqttService
     {
-        private IMqttClient _mqttClient;
+        private IMqttClient? _mqttClient;
 
-        public event EventHandler<string> MessageReceived;
-        public event EventHandler<MenuItem[]> MenuItemsReceived;
-        public event EventHandler<(string Topic, string Payload)> TopicMessageReceived;
-        public event EventHandler Connected;
+        public event EventHandler<string>? MessageReceived;
+        public event EventHandler<MenuItem[]>? MenuItemsReceived;
+        public event EventHandler<(string Topic, string Payload)>? TopicMessageReceived;
+        public event EventHandler? Connected;
 
         public async Task StartAsync()
         {
