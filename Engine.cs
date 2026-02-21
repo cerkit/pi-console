@@ -261,14 +261,21 @@ namespace PiConsole
             string colorMarkup = titleColorName != null ? $"[{titleColorName}]" : "";
             string endMarkup = titleColorName != null ? "[/]" : "";
 
-            var alignableContent = new Align(new Markup(content), HorizontalAlignment.Center, VerticalAlignment.Middle);
-
-            if (string.IsNullOrEmpty(content))
+            IRenderable alignableContent;
+            
+            if (panelKey == "Output")
             {
-                alignableContent = new Align(new Markup($"{colorMarkup}{Markup.Escape(title)}{endMarkup}"), HorizontalAlignment.Center, VerticalAlignment.Middle);
+                // Left justify output panel content, center vertically
+                alignableContent = new Align(new Markup(content), HorizontalAlignment.Left, VerticalAlignment.Middle);
+            }
+            else 
+            {
+                // Center align Status Panel and other panels
+                alignableContent = new Align(new Markup(content), HorizontalAlignment.Center, VerticalAlignment.Middle);
             }
 
             var panel = new Panel(alignableContent)
+                .Header($"{colorMarkup}{Markup.Escape(title)}{endMarkup}", Justify.Center)
                 .Expand()
                 .Border(BoxBorder.Square);
 
