@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using PiConsole.Models;
 
 namespace PiConsole
 {
@@ -16,9 +17,26 @@ namespace PiConsole
         private readonly MqttService _mqttService;
         private Action? _refreshUi;
 
+        private string _lastOutputContent = "";
+        private string _lastStatusContent = "System idle.";
+        private UiConfigData? _uiConfig;
+
         public Engine(MqttService mqttService)
         {
             _mqttService = mqttService;
+        }
+
+        public void UpdateUiConfig(UiConfigData config)
+        {
+            _uiConfig = config;
+            _refreshUi?.Invoke();
+        }
+
+        public void UpdateMenu(MenuItem[] items)
+        {
+            _menuItems = items;
+            if (_selectedIndex >= _menuItems.Length) _selectedIndex = 0;
+            _refreshUi?.Invoke();
         }
 
         public void AddActiveChannel(string channelName)
@@ -49,13 +67,13 @@ namespace PiConsole
             var layout = new Layout("Root")
                 .SplitRows(
                     new Layout("Header", CreateBanner()),
-                    new Layout("Operations", CreatePanel("Operations Panel", "")).Ratio(2),
+                    new Layout("Operations", CreateOperationsPanel()).Ratio(2),
                     new Layout("MiddleBottom")
                         .SplitColumns(
                             new Layout("Menu", CreateMenuPanel(_menuItems, _selectedIndex)).Ratio(1),
-                            new Layout("Output", CreatePanel("Output Panel", "")).Ratio(2)
+                            new Layout("Output", CreatePanel("Output", _lastOutputContent)).Ratio(2)
                         ).Ratio(1),
-                    new Layout("Footer", CreatePanel("Status Panel", "System idle.")).Size(3)
+                    new Layout("Footer", CreatePanel("Status", _lastStatusContent)).Size(3)
                 );
 
             AnsiConsole.Live(layout)
@@ -64,22 +82,24 @@ namespace PiConsole
                 {
                     _refreshUi = () => 
                     {
+                        layout["Header"].Update(CreateBanner());
                         layout["Operations"].Update(CreateOperationsPanel());
+                        layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
+                        layout["Output"].Update(CreatePanel("Output", _lastOutputContent));
+                        layout["Footer"].Update(CreatePanel("Status", _lastStatusContent));
                         ctx.Refresh();
                     };
 
                     _mqttService.MessageReceived += (sender, msg) =>
                     {
-                        layout["Footer"].Update(CreatePanel("Status Panel", msg));
-                        ctx.Refresh();
+                        _lastStatusContent = msg;
+                        _refreshUi?.Invoke();
                     };
 
                     _mqttService.MenuItemsReceived += (sender, items) =>
                     {
-                        _menuItems = items;
-                        if (_selectedIndex >= _menuItems.Length) _selectedIndex = 0;
-                        layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
-                        ctx.Refresh();
+                        // Fallback logic for backward compatibility
+                        UpdateMenu(items);
                     };
 
                     _ = Task.Run(async () => 
@@ -88,22 +108,17 @@ namespace PiConsole
                         {
                             await _mqttService.StartAsync();
                             await Task.Delay(500); // Give subscriptions a moment to establish
-                            await _mqttService.PublishAsync("pi-console/client/startup", "");
+                            await _mqttService.PublishAsync("pi-console/client/startup", "{ \"status\": \"online\" }");
                         }
                         catch (Exception ex) 
                         {
-                            layout["Footer"].Update(CreatePanel("Status Panel", $"[red]MQTT connection failed:[/] {Markup.Escape(ex.Message)}"));
-                            ctx.Refresh();
+                            _lastStatusContent = $"[red]MQTT connection failed:[/] {Markup.Escape(ex.Message)}";
+                            _refreshUi?.Invoke();
                         }
                     });
 
                     while (_isRunning)
                     {
-                        // Refresh layout elements
-                        layout["Operations"].Update(CreateOperationsPanel());
-                        layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
-                        ctx.Refresh();
-
                         // Wait for key
                         if (Console.IsInputRedirected)
                         {
@@ -116,10 +131,12 @@ namespace PiConsole
                             case ConsoleKey.UpArrow:
                                 _selectedIndex--;
                                 if (_selectedIndex < 0) _selectedIndex = _menuItems.Length - 1;
+                                _refreshUi?.Invoke();
                                 break;
                             case ConsoleKey.DownArrow:
                                 _selectedIndex++;
                                 if (_selectedIndex >= _menuItems.Length) _selectedIndex = 0;
+                                _refreshUi?.Invoke();
                                 break;
                             case ConsoleKey.Q:
                             case ConsoleKey.Escape:
@@ -135,8 +152,8 @@ namespace PiConsole
                                     }
                                     else
                                     {
-                                        layout["Output"].Update(CreatePanel("Output Panel", $"Selected: {Markup.Escape(item.Label)}"));
-                                        ctx.Refresh();
+                                        _lastOutputContent = $"Selected: {Markup.Escape(item.Label)}";
+                                        _refreshUi?.Invoke();
                                     }
                                 }
                                 break;
@@ -145,24 +162,58 @@ namespace PiConsole
                 });
         }
 
+        private Color GetBorderColor(string colorName)
+        {
+            return colorName.ToLower() switch
+            {
+                "black" => Color.Black,
+                "red" => Color.Red,
+                "green" => Color.Green,
+                "yellow" => Color.Yellow,
+                "blue" => Color.Blue,
+                "magenta" => Color.Magenta,
+                "cyan" => Color.Cyan,
+                "white" => Color.White,
+                "orange1" => Color.Orange1,
+                "purple" => Color.Purple,
+                "grey" => Color.Grey,
+                "gold1" => Color.Gold1,
+                "dodgerblue1" => Color.DodgerBlue1,
+                _ => Color.Default
+            };
+        }
+
         private IRenderable CreateBanner()
         {
-            var figlet = new FigletText("PI-CONSOLE")
-                .Centered();
+            var config = _uiConfig?.HeaderPanel;
+            string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
+            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
+            string endMarkup = borderColorName != null ? "[/]" : "";
 
-            var subtitle = new Markup("v0.1-beta").Centered();
+            var figlet = new FigletText("PI-CONSOLE").Centered();
+            if (borderColorName != null) figlet.Color(GetBorderColor(borderColorName));
+
+            var subtitle = new Markup($"{colorMarkup}v0.1-beta{endMarkup}").Centered();
 
             var grid = new Grid()
                 .AddColumn(new GridColumn().Centered())
                 .AddRow(figlet)
                 .AddRow(subtitle);
 
-            return new Panel(grid)
-                .Padding(1, 1);
+            var panel = new Panel(grid).Padding(1, 1);
+            if (borderColorName != null) panel.BorderColor(GetBorderColor(borderColorName));
+
+            return panel;
         }
 
         private Panel CreateOperationsPanel()
         {
+            var config = _uiConfig?.OperationsPanel;
+            string title = !string.IsNullOrEmpty(config?.Title) ? config.Title : "Operations Panel";
+            string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
+            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
+            string endMarkup = borderColorName != null ? "[/]" : "";
+
             string[] channels;
             lock (_channelsLock)
             {
@@ -172,43 +223,62 @@ namespace PiConsole
             var table = new Table()
                 .Expand()
                 .Border(TableBorder.None)
-                .AddColumn(new TableColumn("Active Pi-Calculus Channels").Centered());
+                .AddColumn(new TableColumn($"{colorMarkup}{Markup.Escape(title)}{endMarkup}").Centered());
 
             if (channels.Length == 0)
             {
-                table.AddRow("No active channels...");
+                table.AddRow($"{colorMarkup}No active channels...{endMarkup}");
             }
             else
             {
                 foreach (var channel in channels)
                 {
-                    table.AddRow($"{Markup.Escape(channel)}");
+                    table.AddRow($"{colorMarkup}{Markup.Escape(channel)}{endMarkup}");
                 }
             }
 
-            return new Panel(table)
-                .Expand()
-                .Border(BoxBorder.Square);
+            var panel = new Panel(table).Expand().Border(BoxBorder.Square);
+            if (borderColorName != null) panel.BorderColor(GetBorderColor(borderColorName));
+
+            return panel;
         }
 
-        private Panel CreatePanel(string title, string content)
+        private Panel CreatePanel(string panelKey, string content)
         {
+            PanelConfig? config = null;
+            if (panelKey == "Status") config = _uiConfig?.StatusPanel;
+            else if (panelKey == "Output") config = _uiConfig?.OutputPanel;
+
+            // Provide a fallback config logic generally 
+            string title = !string.IsNullOrEmpty(config?.Title) ? config.Title : $"{panelKey} Panel";
+            string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
+            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
+            string endMarkup = borderColorName != null ? "[/]" : "";
+
             var alignableContent = new Align(new Markup(content), HorizontalAlignment.Center, VerticalAlignment.Middle);
 
             if (string.IsNullOrEmpty(content))
             {
-                alignableContent = new Align(new Markup(title), HorizontalAlignment.Center, VerticalAlignment.Middle);
+                alignableContent = new Align(new Markup($"{colorMarkup}{Markup.Escape(title)}{endMarkup}"), HorizontalAlignment.Center, VerticalAlignment.Middle);
             }
 
             var panel = new Panel(alignableContent)
                 .Expand()
                 .Border(BoxBorder.Square);
 
+            if (borderColorName != null) panel.BorderColor(GetBorderColor(borderColorName));
+
             return panel;
         }
 
         private Panel CreateMenuPanel(MenuItem[] items, int selectedIndex)
         {
+            var config = _uiConfig?.MenuPanel;
+            string title = !string.IsNullOrEmpty(config?.Title) ? config.Title : "Menu";
+            string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
+            string colorMarkup = borderColorName != null ? $"[{borderColorName}]" : "";
+            string endMarkup = borderColorName != null ? "[/]" : "";
+
             var grid = new Grid().AddColumn(new GridColumn());
 
             for (int i = 0; i < items.Length; i++)
@@ -254,10 +324,14 @@ namespace PiConsole
                 }
             }
 
-            return new Panel(new Align(grid, HorizontalAlignment.Center, VerticalAlignment.Middle))
-                .Header("Menu", Justify.Center)
+            var panel = new Panel(new Align(grid, HorizontalAlignment.Center, VerticalAlignment.Middle))
+                .Header($"{colorMarkup}{Markup.Escape(title)}{endMarkup}", Justify.Center)
                 .Expand()
                 .Border(BoxBorder.Square);
+
+            if (borderColorName != null) panel.BorderColor(GetBorderColor(borderColorName));
+
+            return panel;
         }
     }
 }

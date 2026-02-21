@@ -18,7 +18,7 @@ namespace PiConsole
 
                     // Register background services
                     services.AddHostedService<PiCalculusActorService>();
-                    services.AddHostedService<DynamicMenuService>();
+                    services.AddHostedService<DynamicUiOrchestratorService>();
                 })
                 .Build();
 
