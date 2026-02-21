@@ -1,0 +1,235 @@
+[
+    {
+        "id": "8477d682d257d7a2",
+        "type": "tab",
+        "label": "Pi Calculus Flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "inject_pi_menu",
+        "type": "inject",
+        "z": "8477d682d257d7a2",
+        "name": "Initiate Menu Handshake",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 260,
+        "y": 260,
+        "wires": [
+            [
+                "func_menu_handshake"
+            ]
+        ]
+    },
+    {
+        "id": "func_menu_handshake",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Create Menu Channel (νz)",
+        "func": "const dynamicChannel = \"pi-console/session/menu-\" + msg._msgid;\n\nmsg.topic = \"pi-console/handshake\";\nmsg.payload = {\n    action: \"PROVIDE_MENU\",\n    channel: dynamicChannel\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 260,
+        "wires": [
+            [
+                "mqtt_out_public"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_public",
+        "type": "mqtt out",
+        "z": "8477d682d257d7a2",
+        "name": "Publish Handshake",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "c651785b7a086428",
+        "x": 750,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "mqtt_in_startup",
+        "type": "mqtt in",
+        "z": "8477d682d257d7a2",
+        "name": "Listen for Client Startup",
+        "topic": "pi-console/client/startup",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "c651785b7a086428",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 250,
+        "y": 220,
+        "wires": [
+            [
+                "func_menu_handshake"
+            ]
+        ]
+    },
+    {
+        "id": "4636064a1df786f1",
+        "type": "mqtt out",
+        "z": "8477d682d257d7a2",
+        "name": "Publish to Session",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "c651785b7a086428",
+        "x": 930,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "1bcd76286657216e",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Generate UI Config",
+        "func": "msg.payload = {\n    messageType: \"UiConfig\",\n    data: {\n        headerPanel: { title: \"Pi-Console\", borderColor: \"white\", titleColor: \"white\" },\n        operationsPanel: { title: \"Operations\", borderColor: \"green\" },\n        statusPanel: { title: \"Status\", borderColor: \"yellow\" },\n        menuPanel: { title: \"Main Menu\", borderColor: \"purple\" },\n        outputPanel: { title: \"System Output\", borderColor: \"orange1\" }\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 400,
+        "wires": [
+            [
+                "4636064a1df786f1"
+            ]
+        ]
+    },
+    {
+        "id": "83159ae676231ac9",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Generate Menu",
+        "func": "msg.payload = {\n    messageType: \"Menu\",\n    data: [\n        { id: 1, label: \"System Status\", icon: \"info\", color: \"green\" },\n        { id: 2, label: \"Network Config\", icon: \"wifi\", color: \"blue\" },\n        { id: 3, label: \"Sensor Logs\", icon: \"list\", color: \"yellow\" },\n        { id: 4, label: \"Device Settings\", icon: \"settings\", color: \"purple\" },\n        { id: 5, label: \"Restart Service\", icon: \"refresh\", color: \"red\" }\n    ]\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 480,
+        "wires": [
+            [
+                "4636064a1df786f1"
+            ]
+        ]
+    },
+    {
+        "id": "30e80a4684fc1547",
+        "type": "switch",
+        "z": "8477d682d257d7a2",
+        "name": "Check Client State",
+        "property": "payload.status",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "READY",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "UI_READY",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 450,
+        "y": 440,
+        "wires": [
+            [
+                "1bcd76286657216e"
+            ],
+            [
+                "83159ae676231ac9"
+            ]
+        ]
+    },
+    {
+        "id": "b6c9aea8e401bacf",
+        "type": "mqtt in",
+        "z": "8477d682d257d7a2",
+        "name": "Listen to Session Channel",
+        "topic": "pi-console/session/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "c651785b7a086428",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 210,
+        "y": 440,
+        "wires": [
+            [
+                "30e80a4684fc1547"
+            ]
+        ]
+    },
+    {
+        "id": "c651785b7a086428",
+        "type": "mqtt-broker",
+        "name": "MQTT Broker",
+        "broker": "",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    }
+]
