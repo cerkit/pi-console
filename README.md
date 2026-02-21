@@ -1,3 +1,4 @@
+![Pi Calculus](images/pi-calc-banner.png)
 # pi-console
 
 pi-console is a .NET 10 console application that emulates the look and feel of a classic Bulletin Board System layout, built with a modern static approach using `Spectre.Console`.
