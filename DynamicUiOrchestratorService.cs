@@ -39,7 +39,7 @@ namespace PiConsole
                             root = payloadElement;
                         }
 
-                        if (root.TryGetProperty("action", out var actionElement) && actionElement.GetString() == "PROVIDE_MENU" &&
+                        if (root.TryGetProperty("action", out var actionElement) && actionElement.GetString() == "INITIATE_SESSION" &&
                             root.TryGetProperty("channel", out var channelElement))
                         {
                             string? channel = channelElement.GetString();
