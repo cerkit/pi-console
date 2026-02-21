@@ -203,7 +203,11 @@ namespace PiConsole
                 .AddRow(figlet)
                 .AddRow(subtitle);
 
-            var panel = new Panel(grid).Padding(1, 1);
+            var panel = new Panel(grid)
+                .Expand()
+                .Border(BoxBorder.Square)
+                .Padding(1, 1);
+
             if (borderColorName != null) panel.BorderColor(GetBorderColor(borderColorName));
 
             return panel;
