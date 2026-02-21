@@ -160,7 +160,7 @@ namespace PiConsole
         private Panel CreateMenuPanel(MenuItem[] items, int selectedIndex)
         {
             var grid = new Grid().AddColumn(new GridColumn());
-            grid.AddRow(new Markup("[blue]Menu Panel[/]").Centered());
+            grid.AddRow(new Markup("[blue]Menu[/]").Centered());
             grid.AddRow(new Text("")); 
 
             for (int i = 0; i < items.Length; i++)
