@@ -186,13 +186,14 @@ namespace PiConsole
         private IRenderable CreateBanner()
         {
             var config = _uiConfig?.HeaderPanel;
+            string title = !string.IsNullOrEmpty(config?.Title) ? config.Title : "PI-CONSOLE";
             string? borderColorName = !string.IsNullOrEmpty(config?.BorderColor) ? config.BorderColor : null;
             string? titleColorName = !string.IsNullOrEmpty(config?.TitleColor) ? config.TitleColor : null;
 
             string colorMarkup = titleColorName != null ? $"[{titleColorName}]" : "";
             string endMarkup = titleColorName != null ? "[/]" : "";
 
-            var figlet = new FigletText("PI-CONSOLE").Centered();
+            var figlet = new FigletText(title).Centered();
             if (titleColorName != null) figlet.Color(GetBorderColor(titleColorName));
 
             var subtitle = new Markup($"{colorMarkup}v0.1-beta{endMarkup}").Centered();
