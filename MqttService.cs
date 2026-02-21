@@ -15,6 +15,8 @@ namespace PiConsole
 
         public event EventHandler<string> MessageReceived;
         public event EventHandler<MenuItem[]> MenuItemsReceived;
+        public event EventHandler<(string Topic, string Payload)> TopicMessageReceived;
+        public event EventHandler Connected;
 
         public async Task StartAsync()
         {
@@ -57,15 +59,19 @@ namespace PiConsole
                 {
                     MessageReceived?.Invoke(this, payload);
                 }
-                else if (topic == "pi-console/menu/items")
+                else if (topic == "pi-console/menu/items" || topic.StartsWith("pi-console/session/"))
                 {
                     try
                     {
-                        var items = JsonSerializer.Deserialize<MenuItem[]>(payload);
-                        if (items != null)
+                        // Safely ignore object payloads (like handshakes/acks) by checking if it looks like an array
+                        if (payload.TrimStart().StartsWith("["))
                         {
-                            var sortedItems = items.OrderBy(i => i.Id).ToArray();
-                            MenuItemsReceived?.Invoke(this, sortedItems);
+                            var items = JsonSerializer.Deserialize<MenuItem[]>(payload);
+                            if (items != null)
+                            {
+                                var sortedItems = items.OrderBy(i => i.Id).ToArray();
+                                MenuItemsReceived?.Invoke(this, sortedItems);
+                            }
                         }
                     }
                     catch
@@ -73,6 +79,9 @@ namespace PiConsole
                         // Ignore parsing errors for now
                     }
                 }
+                
+                // Fire generic topic received for anyone interested
+                TopicMessageReceived?.Invoke(this, (topic, payload));
 
                 return Task.CompletedTask;
             };
@@ -85,6 +94,8 @@ namespace PiConsole
                 .Build();
 
             await _mqttClient.SubscribeAsync(mqttSubscribeOptions, System.Threading.CancellationToken.None);
+            
+            Connected?.Invoke(this, EventArgs.Empty);
         }
 
         public async Task PublishAsync(string topic, string payload)
@@ -96,6 +107,18 @@ namespace PiConsole
                     .WithPayload(payload)
                     .Build();
                 await _mqttClient.PublishAsync(message, System.Threading.CancellationToken.None);
+            }
+        }
+
+        public async Task SubscribeAsync(string topic)
+        {
+            if (_mqttClient != null && _mqttClient.IsConnected)
+            {
+                var factory = new MqttFactory();
+                var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
+                    .WithTopicFilter(f => f.WithTopic(topic))
+                    .Build();
+                await _mqttClient.SubscribeAsync(subscribeOptions, CancellationToken.None);
             }
         }
     }
