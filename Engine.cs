@@ -54,6 +54,35 @@ namespace PiConsole
 
         public void UpdatePanel(string targetPanel, string content)
         {
+            if (targetPanel.Equals("commandProcessor", StringComparison.OrdinalIgnoreCase))
+            {
+                switch (content.ToUpperInvariant())
+                {
+                    case "EXIT":
+                        _isRunning = false;
+                        Environment.Exit(0);
+                        break;
+                    case "RESTART":
+                        _lastStatusContent = "Restarting UI configuration sequence...";
+                        _refreshStatus?.Invoke();
+
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _mqttService.PublishAsync("pi-console/client/startup", "{ \"status\": \"online\" }");
+                            }
+                            catch (Exception ex)
+                            {
+                                _lastStatusContent = $"[red]Restart err:[/] {Markup.Escape(ex.Message)}";
+                                _refreshUi?.Invoke();
+                            }
+                        });
+                        break;
+                }
+                return;
+            }
+
             if (targetPanel.Equals("outputPanel", StringComparison.OrdinalIgnoreCase))
             {
                 _lastOutputContent = content;
