@@ -20,10 +20,15 @@ namespace PiConsole
         private Action? _refreshUi;
         private Action? _refreshOutput;
         private Action? _refreshOperations;
+        private Action? _refreshStatus;
+        private Action? _refreshHeader;
+        private Action? _refreshMenu;
 
         private string _lastOutputContent = "";
         private string _lastOperationsContent = "";
         private string _lastStatusContent = "System idle.";
+        private string _lastHeaderContent = "";
+        private string _lastMenuContent = "";
         private UiConfigData? _uiConfig;
         
         // Track the current active dynamic session channel for executing Actions
@@ -58,6 +63,21 @@ namespace PiConsole
             {
                 _lastOperationsContent = content;
                 _refreshOperations?.Invoke();
+            }
+            else if (targetPanel.Equals("statusPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastStatusContent = content;
+                _refreshStatus?.Invoke();
+            }
+            else if (targetPanel.Equals("headerPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastHeaderContent = content;
+                _refreshHeader?.Invoke();
+            }
+            else if (targetPanel.Equals("menuPanel", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastMenuContent = content;
+                _refreshMenu?.Invoke();
             }
         }
 
@@ -127,6 +147,24 @@ namespace PiConsole
                     _refreshOperations = () => 
                     {
                         layout["Operations"].Update(CreateOperationsPanel());
+                        ctx.Refresh();
+                    };
+
+                    _refreshStatus = () =>
+                    {
+                        layout["Footer"].Update(CreatePanel("Status", _lastStatusContent));
+                        ctx.Refresh();
+                    };
+
+                    _refreshHeader = () =>
+                    {
+                        layout["Header"].Update(CreateBanner());
+                        ctx.Refresh();
+                    };
+
+                    _refreshMenu = () =>
+                    {
+                        layout["Menu"].Update(CreateMenuPanel(_menuItems, _selectedIndex));
                         ctx.Refresh();
                     };
 
@@ -257,7 +295,8 @@ namespace PiConsole
             var figlet = new FigletText(title).Centered();
             if (titleColorName != null) figlet.Color(GetBorderColor(titleColorName));
 
-            var subtitle = new Markup($"{colorMarkup}v0.1-beta{endMarkup}").Centered();
+            string subtitleText = !string.IsNullOrEmpty(_lastHeaderContent) ? _lastHeaderContent : "v0.1-beta";
+            var subtitle = new Markup($"{colorMarkup}{subtitleText}{endMarkup}").Centered();
 
             var grid = new Grid()
                 .AddColumn(new GridColumn().Centered())
@@ -368,6 +407,12 @@ namespace PiConsole
             string endMarkup = titleColorName != null ? "[/]" : "";
 
             var grid = new Grid().AddColumn(new GridColumn());
+
+            if (!string.IsNullOrEmpty(_lastMenuContent))
+            {
+                grid.AddRow(new Markup(_lastMenuContent));
+                grid.AddEmptyRow();
+            }
 
             for (int i = 0; i < items.Length; i++)
             {
