@@ -57,11 +57,11 @@ This application utilizes a "channel mobility" system for MQTT communication. Al
   ```
   or
   ```json
-  {"action": "PROVIDE_MENU", "channel": "session_id"}
+  {"action": "INITIATE_SESSION", "channel": "session_id"}
   ```
   When the application receives a handshake, it reads the dynamic channel string, instantly opens a subscription to that active channel, and registers it in the live "Operations" screen.
 
-- **Dynamic Menus**: If a `PROVIDE_MENU` handshake is requested, the application publishes a `{"status": "READY"}` payload back to the dynamic channel. It then waits for a JSON array of `MenuItem` objects on that channel. 
+- **Dynamic Menus**: If a `INITIATE_SESSION` handshake is requested, the application publishes a `{"status": "READY"}` payload back to the dynamic channel. It then waits for a JSON array of `MenuItem` objects on that channel. 
   - Expected JSON format for a menu array:
     ```json
     [
