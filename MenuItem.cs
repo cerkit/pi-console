@@ -18,5 +18,8 @@ namespace PiConsole
 
         [JsonPropertyName("actionTopic")]
         public string? ActionTopic { get; set; }
+
+        [JsonPropertyName("action")]
+        public string? Action { get; set; }
     }
 }

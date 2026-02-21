@@ -22,6 +22,7 @@ namespace PiConsole
         private Action? _refreshOperations;
 
         private string _lastOutputContent = "";
+        private string _lastOperationsContent = "";
         private string _lastStatusContent = "System idle.";
         private UiConfigData? _uiConfig;
         
@@ -55,7 +56,7 @@ namespace PiConsole
             }
             else if (targetPanel.Equals("operationsPanel", StringComparison.OrdinalIgnoreCase))
             {
-                // Optionally handle other specific panel data here if you decouple operations tracking natively
+                _lastOperationsContent = content;
                 _refreshOperations?.Invoke();
             }
         }
@@ -194,7 +195,9 @@ namespace PiConsole
                                         _lastOutputContent = $"Executing: {Markup.Escape(item.Label)}...";
                                         _refreshOutput?.Invoke();
 
-                                        if (!string.IsNullOrEmpty(item.ActionTopic))
+                                        string? targetActionTopic = !string.IsNullOrEmpty(item.ActionTopic) ? item.ActionTopic : item.Action;
+
+                                        if (!string.IsNullOrEmpty(targetActionTopic))
                                         {
                                             // Execute dynamic action off UI thread
                                             _ = Task.Run(async () =>
@@ -203,7 +206,7 @@ namespace PiConsole
                                                 {
                                                     var payload = new { sessionChannel = _currentSessionChannel };
                                                     var jsonPayload = System.Text.Json.JsonSerializer.Serialize(payload);
-                                                    await _mqttService.PublishAsync(item.ActionTopic, jsonPayload);
+                                                    await _mqttService.PublishAsync(targetActionTopic, jsonPayload);
                                                 }
                                                 catch (Exception ex)
                                                 {
@@ -291,6 +294,13 @@ namespace PiConsole
                 .Expand()
                 .Border(TableBorder.None)
                 .AddColumn(new TableColumn($"{colorMarkup}{Markup.Escape(title)}{endMarkup}").Centered());
+
+            if (!string.IsNullOrEmpty(_lastOperationsContent))
+            {
+                // Insert the dynamic payload string first
+                table.AddRow(new Markup(_lastOperationsContent));
+                table.AddEmptyRow();
+            }
 
             if (channels.Length == 0)
             {
