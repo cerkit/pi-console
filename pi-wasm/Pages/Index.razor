@@ -11,14 +11,14 @@
 <div class="qubit-container">
     <div class="panel header-panel">
         <h1>@(UiService.UiConfig?.HeaderPanel?.Title ?? "QUBIT BBS")</h1>
-        <div class="subtitle">@(string.IsNullOrEmpty(UiService.LastHeaderContent) ? "v0.1-beta" : UiService.LastHeaderContent)</div>
+        <div class="subtitle">@(string.IsNullOrEmpty(UiService.LastHeaderContent) ? (MarkupString)"v0.1-beta" : (MarkupString)UiService.LastHeaderContent)</div>
     </div>
 
     <div class="panel operations-panel">
         <div class="panel-content">
             @if (!string.IsNullOrEmpty(UiService.LastOperationsContent))
             {
-                <div>@UiService.LastOperationsContent</div>
+                <div>@((MarkupString)UiService.LastOperationsContent)</div>
                 <br/>
             }
             @if (UiService.ActiveChannels.Count == 0)
@@ -40,7 +40,7 @@
             <div class="panel-content">
                 @if (!string.IsNullOrEmpty(UiService.LastMenuContent))
                 {
-                    <div>@UiService.LastMenuContent</div>
+                    <div>@((MarkupString)UiService.LastMenuContent)</div>
                     <br/>
                 }
                 
@@ -57,13 +57,13 @@
 
         <div class="panel output-panel">
             <div class="panel-content">
-                @((MarkupString)UiService.LastOutputContent.Replace("\n", "<br/>"))
+                @((MarkupString)UiService.LastOutputContent)
             </div>
         </div>
     </div>
 
     <div class="panel status-panel">
-        @UiService.LastStatusContent
+        @((MarkupString)UiService.LastStatusContent)
     </div>
 </div>
 

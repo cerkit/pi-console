@@ -36,22 +36,24 @@ namespace pi_wasm.Services
 
         public void UpdatePanel(string targetPanel, string content)
         {
+            var parsedContent = pi_wasm.Helpers.SpectreConsoleParser.ParseToHtml(content);
+
             switch(targetPanel.ToLowerInvariant())
             {
                 case "outputpanel":
-                    LastOutputContent = content;
+                    LastOutputContent = parsedContent;
                     break;
                 case "operationspanel":
-                    LastOperationsContent = content;
+                    LastOperationsContent = parsedContent;
                     break;
                 case "statuspanel":
-                    LastStatusContent = content;
+                    LastStatusContent = parsedContent;
                     break;
                 case "headerpanel":
-                    LastHeaderContent = content;
+                    LastHeaderContent = parsedContent;
                     break;
                 case "menupanel":
-                    LastMenuContent = content;
+                    LastMenuContent = parsedContent;
                     break;
             }
             NotifyStateChanged();
