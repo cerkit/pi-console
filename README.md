@@ -1,13 +1,21 @@
 ![Pi Calculus](images/pi-calc-banner.png)
-# pi-console
+# pi-console & pi-wasm
 
-pi-console is a .NET 10 console application that emulates the look and feel of a classic Bulletin Board System layout, built with a modern static approach using `Spectre.Console`.
+This solution contains two thin client applications built around a shared orchestration layer utilizing **MQTT "channel mobility" (Pi Calculus)** for dynamic UI generation:
+
+1. **`pi-console`**: A .NET 10 console application that emulates the look and feel of a classic Bulletin Board System layout, built with a modern static approach using `Spectre.Console`.
+2. **`pi-wasm`**: A .NET 10 Blazor WebAssembly application that replicates the exact same BBS interface within a web browser, communicating directly over secure WebSockets.
+
+---
+
+## Shared Architecture
+To support multiple clients, core business logic, MQTT communication, and layout models are decoupled into the **`Pi.Shared`** library. Each client project (`pi-console` and `pi-wasm`) simply implements the `IUiService` interface to render the dynamic JSON payloads provided by Node-RED into their respective UI frameworks.
 
 ## Features
-- **Static Layout**: Uses a rendering loop via `AnsiConsole.Live` to display panels without scrolling or breaking the terminal layout.
-- **Interactive Menu**: Fully navigatable using the Up/Down Arrow keys. Press "Enter" to make a selection, which prints to the Output panel.
+- **Static Layouts**: Uses rendering loops via `AnsiConsole.Live` for the CLI and a CSS Flexbox grid for WASM to display panels without scrolling or breaking layouts.
+- **Interactive Menu**: Fully navigatable using the Up/Down Arrow keys in the console, or mouse clicks in the browser.
 - **Dynamic Channels (Pi Calculus)**: Uses MQTT "channel mobility" to dynamically subscribe to new communication sessions established via handshakes.
-- **Real-time Status Updates**: Subscribes to an MQTT broker to display real-time signal messages at the bottom status bar.
+- **Real-time Status Updates**: Subscribes to an MQTT broker to display real-time signal messages and apply `Spectre.Console` color markup translations (e.g. `[green]ONLINE[/]`).
 
 ## Requirements
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
@@ -20,10 +28,7 @@ pi-console is a .NET 10 console application that emulates the look and feel of a
    git clone https://github.com/cerkit/pi-console.git
    ```
 
-2. Navigate into the directory:
-   ```bash
-   cd pi-console
-   ```
+2. Make sure you have the required .NET environment set up.
 
 3. **Configure Secrets**:
    Create a directory named `.secrets` in the root of the project, then create a file named `secrets.json` inside it to configure your MQTT Broker IP Address and Port. It should look like this:
@@ -35,10 +40,20 @@ pi-console is a .NET 10 console application that emulates the look and feel of a
    ```
    *Note: This file is ignored by git.*
 
-4. Run the application:
+4. **Run the CLI Application (`pi-console`)**:
+   Navigate to the `pi-console` directory and run:
    ```bash
+   cd pi-console
    dotnet run
    ```
+
+5. **Run the Web Application (`pi-wasm`)**:
+   Navigate to the `pi-wasm` directory and run:
+   ```bash
+   cd pi-wasm
+   dotnet watch run
+   ```
+   *Note: The Blazor WASM client relies on the broker having WebSockets exposed (e.g., Mosquitto on Port `9001`).*
 
 ## Usage
 
@@ -74,6 +89,8 @@ This application utilizes a "channel mobility" system for MQTT communication. Al
 - **Global Messages**: If messages are published to `pi-console/status` on your MQTT broker, they will appear dynamically in the System Status panel at the bottom.
 
 ## Technology Stack
-- **.NET 10**: Console Framework.
-- **Spectre.Console**: Used for layout management, UI widgets, and styling.
-- **MQTTnet**: Used to subscribe to the remote telemetry broker.
+- **.NET 10**
+- **Pi.Shared**: Class Library for Shared Domain Models and Services.
+- **pi-console**: CLI built using `Spectre.Console` layout management and widgets.
+- **pi-wasm**: Browser client built using `Blazor WebAssembly`.
+- **MQTTnet**: Used for remote telemetry, supporting both TCP sockets and WebSockets.
