@@ -2,3 +2,19 @@
 bin/
 obj/
 .DS_Store
+
+# .NET / UI project ignores
+.vs/
+*.user
+*.userprefs
+*.suo
+node_modules/
+pi-wasm/bin/
+pi-wasm/obj/
+Pi.Shared/bin/
+Pi.Shared/obj/
+pi-console/bin/
+pi-console/obj/
+*.log
+appsettings.Development.json
+appsettings.*.json

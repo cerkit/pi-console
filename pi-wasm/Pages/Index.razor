@@ -1,0 +1,188 @@
+@page "/"
+@using PiConsole
+@using PiConsole.Models
+@using pi_wasm.Services
+@inject BlazorUiService UiService
+@inject MqttService Mqtt
+@implements IDisposable
+
+<PageTitle>Qubit BBS</PageTitle>
+
+<div class="qubit-container">
+    <div class="panel header-panel">
+        <h1>@(UiService.UiConfig?.HeaderPanel?.Title ?? "QUBIT BBS")</h1>
+        <div class="subtitle">@(string.IsNullOrEmpty(UiService.LastHeaderContent) ? "v0.1-beta" : UiService.LastHeaderContent)</div>
+    </div>
+
+    <div class="panel operations-panel">
+        <div class="panel-content">
+            @if (!string.IsNullOrEmpty(UiService.LastOperationsContent))
+            {
+                <div>@UiService.LastOperationsContent</div>
+                <br/>
+            }
+            @if (UiService.ActiveChannels.Count == 0)
+            {
+                <div>No active channels...</div>
+            }
+            else
+            {
+                foreach (var channel in UiService.ActiveChannels)
+                {
+                    <div>@channel</div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="middle-bottom">
+        <div class="panel menu-panel">
+            <div class="panel-content">
+                @if (!string.IsNullOrEmpty(UiService.LastMenuContent))
+                {
+                    <div>@UiService.LastMenuContent</div>
+                    <br/>
+                }
+                
+                @foreach (var item in UiService.MenuItems)
+                {
+                    var icon = string.IsNullOrEmpty(item.Icon) ? "" : $"{item.Icon} ";
+                    <div class="menu-item" @onclick="() => ExecuteAction(item)">
+                        <span class="menu-icon">@icon</span>
+                        <span class="menu-label" style="color: @(item.Color ?? "inherit")">@item.Label</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="panel output-panel">
+            <div class="panel-content">
+                @((MarkupString)UiService.LastOutputContent.Replace("\n", "<br/>"))
+            </div>
+        </div>
+    </div>
+
+    <div class="panel status-panel">
+        @UiService.LastStatusContent
+    </div>
+</div>
+
+<style>
+    body { margin: 0; padding: 10px; font-family: sans-serif; background-color: #f0f0f0; }
+
+    .qubit-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 20px);
+        gap: 10px;
+    }
+
+    .panel {
+        border: 1px solid #aaa;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .header-panel {
+        background-color: #e6dfec; /* light purple */
+        flex: 0 0 auto;
+        padding: 5px;
+    }
+    
+    .header-panel h1 {
+        margin: 0;
+        font-weight: normal;
+        font-size: 2.5em;
+    }
+
+    .operations-panel {
+        background-color: #fff4cd; /* light yellow */
+        flex: 2;
+    }
+
+    .middle-bottom {
+        display: flex;
+        gap: 10px;
+        flex: 3;
+    }
+
+    .menu-panel {
+        background-color: #e0eeff; /* light blue */
+        flex: 1;
+        justify-content: flex-start;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .output-panel {
+        background-color: #dceddb; /* light green */
+        flex: 2;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .status-panel {
+        background-color: #ffffff; /* white */
+        flex: 0 0 30px;
+        justify-content: flex-start;
+        align-items: center;
+        flex-direction: row;
+        text-align: left;
+        padding-left: 10px;
+        border: 1px solid #000;
+    }
+
+    .menu-item {
+        cursor: pointer;
+        padding: 4px;
+    }
+    .menu-item:hover {
+        background-color: rgba(0,0,0,0.1);
+    }
+</style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        UiService.OnStateChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        UiService.OnStateChanged -= StateHasChanged;
+    }
+
+    private async Task ExecuteAction(MenuItem item)
+    {
+        if (item.Label == "Logoff" || item.Label == "Exit")
+        {
+            UiService.UpdatePanel("statusPanel", "Exiting...");
+            return;
+        }
+
+        UiService.UpdatePanel("outputPanel", $"Executing: {item.Label}...");
+
+        string? targetActionTopic = !string.IsNullOrEmpty(item.ActionTopic) ? item.ActionTopic : item.Action;
+        
+        // We find the active session channel (usually the first one that starts with session)
+        string sessionChannel = UiService.ActiveChannels.FirstOrDefault(c => c.StartsWith("pi-console/session/")) ?? "";
+
+        if (!string.IsNullOrEmpty(targetActionTopic))
+        {
+            try
+            {
+                var payload = new { sessionChannel = sessionChannel };
+                var jsonPayload = System.Text.Json.JsonSerializer.Serialize(payload);
+                await Mqtt.PublishAsync(targetActionTopic, jsonPayload);
+            }
+            catch (Exception ex)
+            {
+                UiService.UpdatePanel("statusPanel", $"Action err: {ex.Message}");
+            }
+        }
+    }
+}

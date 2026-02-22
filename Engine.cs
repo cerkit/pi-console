@@ -6,7 +6,7 @@ using PiConsole.Models;
 
 namespace PiConsole
 {
-    public class Engine
+    public class Engine : IUiService
     {
         private MenuItem[] _menuItems = Array.Empty<MenuItem>();
         private string[] _activeChannels = Array.Empty<string>();

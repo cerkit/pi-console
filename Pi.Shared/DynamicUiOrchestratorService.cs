@@ -11,12 +11,12 @@ namespace PiConsole
     public class DynamicUiOrchestratorService : IHostedService
     {
         private readonly MqttService _mqttService;
-        private readonly Engine _engine;
+        private readonly IUiService _uiService;
 
-        public DynamicUiOrchestratorService(MqttService mqttService, Engine engine)
+        public DynamicUiOrchestratorService(MqttService mqttService, IUiService uiService)
         {
             _mqttService = mqttService;
-            _engine = engine;
+            _uiService = uiService;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -50,7 +50,7 @@ namespace PiConsole
                                 await _mqttService.SubscribeAsync(channel);
 
                                 // Notify UI through the Engine
-                                _engine.AddActiveChannel(channel);
+                                _uiService.AddActiveChannel(channel);
 
                                 // Send READY payload back to the new channel
                                 var readyResponse = new { status = "READY" };
@@ -76,7 +76,7 @@ namespace PiConsole
                                 var uiConfig = JsonSerializer.Deserialize<UiConfigData>(sessionMsg.Data.ToString() ?? "{}");
                                 if (uiConfig != null)
                                 {
-                                    _engine.UpdateUiConfig(uiConfig);
+                                    _uiService.UpdateUiConfig(uiConfig);
                                     
                                     var uiReadyResponse = new { status = "UI_READY" };
                                     var jsonUiReady = JsonSerializer.Serialize(uiReadyResponse);
@@ -88,7 +88,7 @@ namespace PiConsole
                                 var menuItems = JsonSerializer.Deserialize<MenuItem[]>(sessionMsg.Data.ToString() ?? "[]");
                                 if (menuItems != null)
                                 {
-                                    _engine.UpdateMenu(menuItems);
+                                    _uiService.UpdateMenu(menuItems);
                                 }
                             }
                             else if (sessionMsg.MessageType == "PanelUpdate" && sessionMsg.Data != null)
@@ -106,11 +106,11 @@ namespace PiConsole
                                 var updateData = JsonSerializer.Deserialize<PanelUpdateData>(rawJson);
                                 if (updateData != null && !string.IsNullOrEmpty(updateData.TargetPanel) && !string.IsNullOrEmpty(updateData.Content))
                                 {
-                                    _engine.UpdatePanel(updateData.TargetPanel, updateData.Content);
+                                    _uiService.UpdatePanel(updateData.TargetPanel, updateData.Content);
                                 }
                                 else
                                 {
-                                    _engine.UpdatePanel("outputPanel", $"[red]Failed to parse PanelUpdate:[/] JSON: {Markup.Escape(rawJson)}");
+                                    _uiService.UpdatePanel("outputPanel", $"[red]Failed to parse PanelUpdate:[/] JSON: {Markup.Escape(rawJson)}");
                                 }
                             }
                         }
@@ -118,7 +118,7 @@ namespace PiConsole
                     catch (Exception ex)
                     {
                         // Fallback debug to status
-                        _engine.UpdatePanel("outputPanel", $"[red]Parser Err:[/] {Markup.Escape(ex.Message)}");
+                        _uiService.UpdatePanel("outputPanel", $"[red]Parser Err:[/] {Markup.Escape(ex.Message)}");
                     }
                 }
             };
