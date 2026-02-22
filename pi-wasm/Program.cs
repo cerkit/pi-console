@@ -16,7 +16,7 @@ builder.Services.AddSingleton<MqttService>(sp =>
     var service = new MqttService();
     service.UseWebSocket = true;
     service.OverrideMqttServer = "localhost";
-    service.OverrideMqttPort = 1880; // Default Node-RED websocket port is usually same as Node-RED, e.g. 1880, but MQTT broker in Node-RED Aedes uses WS.
+    service.OverrideMqttPort = 9001; // Mosquitto WebSocket port is 9001
     return service;
 });
 
