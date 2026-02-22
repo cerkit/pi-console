@@ -30,15 +30,9 @@ To support multiple clients, core business logic, MQTT communication, and layout
 
 2. Make sure you have the required .NET environment set up.
 
-3. **Configure Secrets**:
-   Create a directory named `.secrets` in the root of the project, then create a file named `secrets.json` inside it to configure your MQTT Broker IP Address and Port. It should look like this:
-   ```json
-   {
-     "MqttIpAddress": "[IP_ADDRESS]",
-     "MqttPort": 1883
-   }
-   ```
-   *Note: This file is ignored by git.*
+3. **Configure Connection Properties**:
+   Both clients are set to connect using **MQTT over WebSockets** (defaulting to `localhost:9001`) to prevent native operating system TCP ghost broker conflicts. 
+   The connection strings and targeted `ClientId` (either `pi-console` or `pi-wasm`) are explicitly configured in the individual `Program.cs` files during the `MqttService` dependency injection registration.
 
 4. **Run the CLI Application (`pi-console`)**:
    Navigate to the `pi-console` directory and run:
@@ -63,11 +57,11 @@ When the application is running:
 - Press **Q** or **Escape** (or press Enter on an item labeled "Logoff" or "Exit") to log off and exit the application safely.
 
 ### The Pi Calculus Architecture
-This application utilizes a "channel mobility" system for MQTT communication. All application UI configuration occurs dynamically. 
+This application utilizes a "channel mobility" system for MQTT communication. All application UI configuration occurs dynamically, customized per `ClientId`.
 
-- **Startup**: When the app starts, it publishes an empty payload to the `pi-console/client/startup` topic to announce its presence.
+- **Startup**: When the app starts, it publishes a JSON payload `{"clientId": "{ClientId}"}` to the `pi-console/client/startup` topic to announce its presence.
 
-- **Session Handshakes**: The app listens on the `pi-console/handshake` topic for new connection instructions. Handshakes are formatted in JSON:
+- **Session Handshakes**: The app listens on its targeted `pi-console/handshake/{clientId}` topic for new connection instructions. Handshakes are formatted in JSON:
   ```json
   {"action": "CONNECT", "replyToChannel": "session_id"}
   ```
@@ -77,7 +71,7 @@ This application utilizes a "channel mobility" system for MQTT communication. Al
   ```
   When the application receives a handshake, it reads the dynamic channel string, instantly opens a subscription to that active channel, and registers it in the live "Operations" screen.
 
-- **Dynamic Menus**: If a `INITIATE_SESSION` handshake is requested, the application publishes a `{"status": "READY"}` payload back to the dynamic channel. It then waits for a JSON array of `MenuItem` objects on that channel. 
+- **Dynamic Menus and UI Configs**: If an `INITIATE_SESSION` handshake is requested, the application publishes a `{"status": "READY"}` payload back to the dynamic channel. The Node-RED backend looks up the requested `clientId` in its configuration dictionary and serves targeted UI layout parameters and menu options down the secure channel. 
   - Expected JSON format for a menu array:
     ```json
     [

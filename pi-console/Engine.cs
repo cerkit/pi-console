@@ -70,7 +70,8 @@ namespace PiConsole
                         {
                             try
                             {
-                                await _mqttService.PublishAsync("pi-console/client/startup", "{ \"status\": \"online\" }");
+                                var p = new { clientId = _mqttService.ClientId };
+                                await _mqttService.PublishAsync("pi-console/client/startup", System.Text.Json.JsonSerializer.Serialize(p));
                             }
                             catch (Exception ex)
                             {
@@ -215,7 +216,8 @@ namespace PiConsole
                         {
                             await _mqttService.StartAsync();
                             await Task.Delay(500); // Give subscriptions a moment to establish
-                            await _mqttService.PublishAsync("pi-console/client/startup", "{ \"status\": \"online\" }");
+                            var p = new { clientId = _mqttService.ClientId };
+                            await _mqttService.PublishAsync("pi-console/client/startup", System.Text.Json.JsonSerializer.Serialize(p));
                         }
                         catch (Exception ex) 
                         {
