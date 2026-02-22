@@ -1,0 +1,228 @@
+[
+    {
+        "id": "mqtt_in_actions",
+        "type": "mqtt in",
+        "z": "8477d682d257d7a2",
+        "name": "Listen for Actions",
+        "topic": "pi-console/action/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "c651785b7a086428",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 120,
+        "y": 640,
+        "wires": [
+            [
+                "switch_action_router"
+            ]
+        ]
+    },
+    {
+        "id": "switch_action_router",
+        "type": "switch",
+        "z": "8477d682d257d7a2",
+        "name": "Route Action",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "pi-console/action/status",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/network",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/sensors",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/settings",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/restart",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 5,
+        "x": 330,
+        "y": 640,
+        "wires": [
+            [
+                "func_process_status"
+            ],
+            [
+                "func_process_network"
+            ],
+            [
+                "bf85e6680d616390"
+            ],
+            [
+                "ddcd28dbe14a7aee"
+            ],
+            [
+                "3ab8b165edc077f2"
+            ]
+        ]
+    },
+    {
+        "id": "func_process_status",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Process System Status",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"[green]System Status: ONLINE[/]\\nCPU Usage: 42%\\nMemory: 2.1GB / 8.0GB\\nUptime: 14 Days, 2 Hrs\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"outputPanel\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 600,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "func_process_network",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Process Network Config",
+        "func": "const replyChannel = msg.payload.sessionChannel;\n\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"operationsPanel\",\n        content: \"[blue]Network Interfaces:[/]\\neth0: 192.168.4.252\\nwlan0: Disconnected\"\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 640,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_action_reply",
+        "type": "mqtt out",
+        "z": "8477d682d257d7a2",
+        "name": "Send Panel Update to Session",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "c651785b7a086428",
+        "x": 970,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "bf85e6680d616390",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Process Sensor Status",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"[green]Sensor Status: ENABLED[/]\\nHumidity: 12%\\nTemperature: 31℉\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"outputPanel\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 680,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "ddcd28dbe14a7aee",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Process Settings",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"[green]Node-RED: CONFIGURED[/]\\nClient-UI: CONFIGURED\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"outputPanel\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 720,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "3ab8b165edc077f2",
+        "type": "function",
+        "z": "8477d682d257d7a2",
+        "name": "Process Restart",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"RESTART\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"commandProcessor\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 760,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "c651785b7a086428",
+        "type": "mqtt-broker",
+        "name": "MQTT Broker",
+        "broker": "",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    }
+]
