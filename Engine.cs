@@ -446,6 +446,7 @@ namespace PiConsole
             for (int i = 0; i < items.Length; i++)
             {
                 string? color = !string.IsNullOrEmpty(items[i].Color) ? items[i].Color : null;
+                string iconStr = !string.IsNullOrEmpty(items[i].Icon) ? $"{items[i].Icon}  " : "";
 
                 try 
                 {
@@ -453,22 +454,22 @@ namespace PiConsole
                     {
                         if (i == selectedIndex)
                         {
-                            grid.AddRow(new Markup($"[black on {color}]> {Markup.Escape(items[i].Label)} [/]"));
+                            grid.AddRow(new Markup($"[black on {color}]> {iconStr}{Markup.Escape(items[i].Label)} [/]"));
                         }
                         else
                         {
-                            grid.AddRow(new Markup($"[{color}]  {Markup.Escape(items[i].Label)}[/]"));
+                            grid.AddRow(new Markup($"[{color}]  {iconStr}{Markup.Escape(items[i].Label)}[/]"));
                         }
                     } 
                     else 
                     {
                         if (i == selectedIndex)
                         {
-                            grid.AddRow(new Markup($"[invert]> {Markup.Escape(items[i].Label)} [/]"));
+                            grid.AddRow(new Markup($"[invert]> {iconStr}{Markup.Escape(items[i].Label)} [/]"));
                         }
                         else
                         {
-                            grid.AddRow(new Markup($"  {Markup.Escape(items[i].Label)}"));
+                            grid.AddRow(new Markup($"  {iconStr}{Markup.Escape(items[i].Label)}"));
                         }
                     }
                 }
@@ -477,11 +478,11 @@ namespace PiConsole
                     // Fallback to default styling if the color name is invalid in Spectre.Console
                     if (i == selectedIndex)
                     {
-                        grid.AddRow(new Markup($"[invert]> {Markup.Escape(items[i].Label)} [/]"));
+                        grid.AddRow(new Markup($"[invert]> {iconStr}{Markup.Escape(items[i].Label)} [/]"));
                     }
                     else
                     {
-                        grid.AddRow(new Markup($"  {Markup.Escape(items[i].Label)}"));
+                        grid.AddRow(new Markup($"  {iconStr}{Markup.Escape(items[i].Label)}"));
                     }
                 }
             }
