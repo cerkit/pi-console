@@ -96,7 +96,7 @@ This application utilizes a "channel mobility" system for MQTT communication. Al
 - **MQTTnet**: Used for remote telemetry, supporting both TCP sockets and WebSockets.
 
 ## Standard AI Development Prompt
-
+```
 Please read the `NodeRed_Architecture.md` file located in the root of the workspace to understand the current Pi Calculus orchestration, MQTT topics, and JSON payload schemas.  
 
 Task: 
@@ -105,3 +105,4 @@ Task:
 Constraints:
 - Ensure all core MQTT and Pi Calculus logic goes into the shared library.
 - Keep UI-specific rendering inside the `pi-console` or `pi-wasm` projects.
+```
