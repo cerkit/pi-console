@@ -9,6 +9,13 @@ namespace pi_wasm.Services
     {
         public event Action? OnStateChanged;
 
+        private readonly MqttService _mqttService;
+
+        public BlazorUiService(MqttService mqttService)
+        {
+            _mqttService = mqttService;
+        }
+
         public UiConfigData? UiConfig { get; private set; }
         public MenuItem[] MenuItems { get; private set; } = Array.Empty<MenuItem>();
         public List<string> ActiveChannels { get; private set; } = new List<string>();
@@ -36,6 +43,39 @@ namespace pi_wasm.Services
 
         public void UpdatePanel(string targetPanel, string content)
         {
+            if (targetPanel.Equals("commandProcessor", StringComparison.OrdinalIgnoreCase))
+            {
+                switch (content.ToUpperInvariant())
+                {
+                    case "EXIT":
+                        // In WebAssembly, we can't truly Environment.Exit, but we can clear the state to simulate a logoff
+                        LastStatusContent = "[red]System halted. Please refresh the page.[/]";
+                        MenuItems = Array.Empty<MenuItem>();
+                        ActiveChannels.Clear();
+                        NotifyStateChanged();
+                        break;
+                    case "RESTART":
+                        LastStatusContent = "Restarting UI configuration sequence...";
+                        NotifyStateChanged();
+
+                        _ = System.Threading.Tasks.Task.Run(async () =>
+                        {
+                            try
+                            {
+                                var p = new { clientId = _mqttService.ClientId };
+                                await _mqttService.PublishAsync("pi-console/client/startup", System.Text.Json.JsonSerializer.Serialize(p));
+                            }
+                            catch (Exception ex)
+                            {
+                                LastStatusContent = $"[red]Restart err:[/] {pi_wasm.Helpers.SpectreConsoleParser.ParseToHtml("[red]" + ex.Message + "[/]")}";
+                                NotifyStateChanged();
+                            }
+                        });
+                        break;
+                }
+                return;
+            }
+
             var parsedContent = pi_wasm.Helpers.SpectreConsoleParser.ParseToHtml(content);
 
             switch(targetPanel.ToLowerInvariant())

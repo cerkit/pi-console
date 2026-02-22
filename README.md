@@ -52,9 +52,9 @@ To support multiple clients, core business logic, MQTT communication, and layout
 ## Usage
 
 When the application is running:
-- Use the **Up/Down Arrow keys** to scroll through menu items.
-- Press **Enter** on a menu item to push its label to the Output panel.
-- Press **Q** or **Escape** (or press Enter on an item labeled "Logoff" or "Exit") to log off and exit the application safely.
+- Use the **Up/Down Arrow keys** to scroll through menu items in `pi-console`, or use mouse clicks in the `pi-wasm` browser client.
+- Press **Enter** on a menu item (or click it in the browser) to push its label to the Output panel or trigger its dynamic action.
+- Press **Q** or **Escape** (or press Enter/click on an item labeled "Logoff" or "Exit") to log off and exit the application safely. Both clients support dynamic Pi Calculus actions passed via the UI layout configuration, processed by a centralized `commandProcessor` that enables powerful runtime controls such as clearing the interface (`CLEAR`) or restarting the orchestration handshake (`RESTART`).
 
 ### The Pi Calculus Architecture
 This application utilizes a "channel mobility" system for MQTT communication. All application UI configuration occurs dynamically, customized per `ClientId`.
