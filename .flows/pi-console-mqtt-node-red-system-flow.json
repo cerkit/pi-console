@@ -204,8 +204,8 @@
     {
         "id": "c651785b7a086428",
         "type": "mqtt-broker",
-        "name": "MQTT Broker",
-        "broker": "",
+        "name": "Local MQTT",
+        "broker": "localhost",
         "port": 1883,
         "clientid": "",
         "autoConnect": true,
