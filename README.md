@@ -94,3 +94,14 @@ This application utilizes a "channel mobility" system for MQTT communication. Al
 - **pi-console**: CLI built using `Spectre.Console` layout management and widgets.
 - **pi-wasm**: Browser client built using `Blazor WebAssembly`.
 - **MQTTnet**: Used for remote telemetry, supporting both TCP sockets and WebSockets.
+
+## Standard AI Development Prompt
+
+Please read the `NodeRed_Architecture.md` file located in the root of the workspace to understand the current Pi Calculus orchestration, MQTT topics, and JSON payload schemas.  
+
+Task: 
+[Insert your specific goal here, e.g., "Implement the ClientId property in the shared library and update the startup sequence to publish to the targeted public handshake topic as defined in the architecture document."]
+
+Constraints:
+- Ensure all core MQTT and Pi Calculus logic goes into the shared library.
+- Keep UI-specific rendering inside the `pi-console` or `pi-wasm` projects.
