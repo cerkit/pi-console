@@ -101,7 +101,7 @@
         "type": "function",
         "z": "8477d682d257d7a2",
         "name": "Process Network Config",
-        "func": "const replyChannel = msg.payload.sessionChannel;\n\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"operationsPanel\",\n        content: \"[blue]Network Interfaces:[/]\\neth0: 192.168.4.252\\nwlan0: Disconnected\"\n    }\n};\nreturn msg;",
+        "func": "const replyChannel = msg.payload.sessionChannel;\n\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"operationsPanel\",\n        content: \"[blue]Network Interfaces:[/]\\neth0: [IP_ADDRESS]\\nwlan0: Disconnected\"\n    }\n};\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
