@@ -13,6 +13,8 @@ namespace PiConsole
     {
         private IMqttClient? _mqttClient;
 
+        public string ClientId { get; set; } = Guid.NewGuid().ToString();
+
         public bool UseWebSocket { get; set; } = false;
         public string? OverrideMqttServer { get; set; }
         public int? OverrideMqttPort { get; set; }

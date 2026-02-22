@@ -13,12 +13,19 @@ namespace PiConsole
                 .ConfigureServices((hostContext, services) =>
                 {
                     // Register our core services
-                    services.AddSingleton<MqttService>();
+                    services.AddSingleton<MqttService>(sp => {
+                        var service = new MqttService();
+                        service.ClientId = "pi-console";
+                        service.UseWebSocket = true;
+                        service.OverrideMqttServer = "localhost";
+                        service.OverrideMqttPort = 9001;
+                        return service;
+                    });
                     services.AddSingleton<Engine>();
                     services.AddSingleton<IUiService>(sp => sp.GetRequiredService<Engine>());
 
                     // Register background services
-                    services.AddHostedService<PiCalculusActorService>();
+                    // PiCalculusActorService is obsolete, using DynamicUiOrchestratorService
                     services.AddHostedService<DynamicUiOrchestratorService>();
                 })
                 .Build();

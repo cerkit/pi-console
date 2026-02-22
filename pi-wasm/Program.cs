@@ -17,6 +17,7 @@ builder.Services.AddSingleton<MqttService>(sp =>
     service.UseWebSocket = true;
     service.OverrideMqttServer = "localhost";
     service.OverrideMqttPort = 9001; // Mosquitto WebSocket port is 9001
+    service.ClientId = "pi-wasm";
     return service;
 });
 
@@ -36,7 +37,8 @@ _ = orchestrator.StartAsync(System.Threading.CancellationToken.None);
 _ = mqttService.StartAsync().ContinueWith(async t => 
 {
     await Task.Delay(500); // Give subscriptions a moment to establish
-    await mqttService.PublishAsync("pi-console/client/startup", "{ \"status\": \"online\" }");
+    var p = new { clientId = mqttService.ClientId };
+    await mqttService.PublishAsync("pi-console/client/startup", System.Text.Json.JsonSerializer.Serialize(p));
 });
 
 await host.RunAsync();

@@ -22,13 +22,13 @@ namespace PiConsole
             // Subscribe to the global handshake channel once connected
             _mqttService.Connected += async (sender, args) =>
             {
-                await _mqttService.SubscribeAsync("pi-console/handshake");
+                await _mqttService.SubscribeAsync($"pi-console/handshake/{_mqttService.ClientId}");
             };
 
             // Listen for Handshake messages (or any topic really, we filter inside)
             _mqttService.TopicMessageReceived += async (sender, e) =>
             {
-                if (e.Topic == "pi-console/handshake")
+                if (e.Topic == $"pi-console/handshake/{_mqttService.ClientId}")
                 {
                     try
                     {

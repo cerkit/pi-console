@@ -23,12 +23,12 @@ namespace PiConsole
         {
             _mqttService.Connected += async (sender, args) =>
             {
-                await _mqttService.SubscribeAsync("pi-console/handshake");
+                await _mqttService.SubscribeAsync($"pi-console/handshake/{_mqttService.ClientId}");
             };
 
             _mqttService.TopicMessageReceived += async (sender, e) =>
             {
-                if (e.Topic == "pi-console/handshake")
+                if (e.Topic == $"pi-console/handshake/{_mqttService.ClientId}")
                 {
                     try
                     {
