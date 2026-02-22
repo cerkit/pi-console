@@ -34,14 +34,17 @@ To support multiple clients, core business logic, MQTT communication, and layout
    Both clients are set to connect using **MQTT over WebSockets** (defaulting to `localhost:9001`) to prevent native operating system TCP ghost broker conflicts. 
    The connection strings and targeted `ClientId` (either `pi-console` or `pi-wasm`) are explicitly configured in the individual `Program.cs` files during the `MqttService` dependency injection registration.
 
-4. **Run the CLI Application (`pi-console`)**:
+4. **Configure Node-RED Configuration Data**:
+   To allow Node-RED flows to pull the customized UI configuration and menu data for all clients, you must create or place the `pi-console-configs.json` file into the `/data` folder of your Node-RED Docker container. If you mount a local directory to `/data` in your Docker Compose or run command, place the file there. Node-RED will read this file to dynamically serve configs based on `ClientId`.
+
+5. **Run the CLI Application (`pi-console`)**:
    Navigate to the `pi-console` directory and run:
    ```bash
    cd pi-console
    dotnet run
    ```
 
-5. **Run the Web Application (`pi-wasm`)**:
+6. **Run the Web Application (`pi-wasm`)**:
    Navigate to the `pi-wasm` directory and run:
    ```bash
    cd pi-wasm
