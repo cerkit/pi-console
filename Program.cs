@@ -15,6 +15,7 @@ namespace PiConsole
                     // Register our core services
                     services.AddSingleton<MqttService>();
                     services.AddSingleton<Engine>();
+                    services.AddSingleton<IUiService>(sp => sp.GetRequiredService<Engine>());
 
                     // Register background services
                     services.AddHostedService<PiCalculusActorService>();

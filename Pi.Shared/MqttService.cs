@@ -13,6 +13,10 @@ namespace PiConsole
     {
         private IMqttClient? _mqttClient;
 
+        public bool UseWebSocket { get; set; } = false;
+        public string? OverrideMqttServer { get; set; }
+        public int? OverrideMqttPort { get; set; }
+
         public event EventHandler<string>? MessageReceived;
         public event EventHandler<MenuItem[]>? MenuItemsReceived;
         public event EventHandler<(string Topic, string Payload)>? TopicMessageReceived;
@@ -46,9 +50,22 @@ namespace PiConsole
                 }
             }
 
-            var mqttClientOptions = new MqttClientOptionsBuilder()
-                .WithTcpServer(ipAddress, port)
-                .Build();
+            if (!string.IsNullOrEmpty(OverrideMqttServer)) ipAddress = OverrideMqttServer;
+            if (OverrideMqttPort.HasValue) port = OverrideMqttPort.Value;
+
+            var mqttClientOptionsBuilder = new MqttClientOptionsBuilder();
+            
+            if (UseWebSocket || ipAddress.StartsWith("ws://") || ipAddress.StartsWith("wss://"))
+            {
+                string wsUri = ipAddress.StartsWith("ws") ? ipAddress : $"ws://{ipAddress}:{port}/mqtt";
+                mqttClientOptionsBuilder = mqttClientOptionsBuilder.WithWebSocketServer(wsUri);
+            }
+            else
+            {
+                mqttClientOptionsBuilder = mqttClientOptionsBuilder.WithTcpServer(ipAddress, port);
+            }
+
+            var mqttClientOptions = mqttClientOptionsBuilder.Build();
 
             _mqttClient.ApplicationMessageReceivedAsync += e =>
             {

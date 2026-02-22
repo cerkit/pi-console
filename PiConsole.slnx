@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="pi-console.csproj" />
+  <Project Path="pi-wasm/pi-wasm.csproj" />
+  <Project Path="Pi.Shared/Pi.Shared.csproj" />
+</Solution>
