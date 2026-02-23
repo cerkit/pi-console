@@ -34,6 +34,27 @@ To support multiple clients, core business logic, MQTT communication, and layout
    Both clients are set to connect using **MQTT over WebSockets** (defaulting to `localhost:9001`) to prevent native operating system TCP ghost broker conflicts. 
    The connection strings and targeted `ClientId` (either `pi-console` or `pi-wasm`) are explicitly configured in the individual `Program.cs` files during the `MqttService` dependency injection registration.
 
+   **MQTT Authentication Setup**:
+   - For **`pi-console`** (CLI): Create a `secrets.json` file in a `.secrets` folder at the root of the repository (`.secrets/secrets.json`).
+     ```json
+     {
+       "MqttIpAddress": "localhost",
+       "MqttPort": 9001,
+       "Username": "your_mqtt_username",
+       "Password": "your_mqtt_password"
+     }
+     ```
+   - For **`pi-wasm`** (Browser): Create an `appsettings.json` file in the `pi-wasm/wwwroot` folder (`pi-wasm/wwwroot/appsettings.json`).
+     ```json
+     {
+       "Mqtt": {
+         "Username": "your_mqtt_username",
+         "Password": "your_mqtt_password"
+       }
+     }
+     ```
+   *(Note: Both `.secrets/` and `pi-wasm/wwwroot/appsettings.json` are ignored by Git to prevent committing sensitive credentials.)*
+
 4. **Configure Node-RED Configuration Data**:
    To allow Node-RED flows to pull the customized UI configuration and menu data for all clients, you must create or place the `pi-console-configs.json` file into the `/data` folder of your Node-RED Docker container. If you mount a local directory to `/data` in your Docker Compose or run command, place the file there. Node-RED will read this file to dynamically serve configs based on `ClientId`.
 
