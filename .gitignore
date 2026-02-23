@@ -19,3 +19,4 @@ pi-console/obj/
 mqtt_error.txt
 appsettings.Development.json
 appsettings.*.json
+pi-wasm/wwwroot/appsettings.json
