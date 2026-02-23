@@ -18,6 +18,8 @@ builder.Services.AddSingleton<MqttService>(sp =>
     service.OverrideMqttServer = "localhost";
     service.OverrideMqttPort = 9001; // Mosquitto WebSocket port is 9001
     service.ClientId = "pi-wasm";
+    service.Username = builder.Configuration["Mqtt:Username"];
+    service.Password = builder.Configuration["Mqtt:Password"];
     return service;
 });
 

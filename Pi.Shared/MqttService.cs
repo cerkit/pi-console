@@ -18,6 +18,8 @@ namespace PiConsole
         public bool UseWebSocket { get; set; } = false;
         public string? OverrideMqttServer { get; set; }
         public int? OverrideMqttPort { get; set; }
+        public string? Username { get; set; }
+        public string? Password { get; set; }
 
         public event EventHandler<string>? MessageReceived;
         public event EventHandler<MenuItem[]>? MenuItemsReceived;
@@ -59,12 +61,20 @@ namespace PiConsole
             
             if (UseWebSocket || ipAddress.StartsWith("ws://") || ipAddress.StartsWith("wss://"))
             {
-                string wsUri = ipAddress.StartsWith("ws") ? ipAddress : $"ws://{ipAddress}:{port}/mqtt";
-                mqttClientOptionsBuilder = mqttClientOptionsBuilder.WithWebSocketServer(wsUri);
+                string cleanIp = ipAddress.Replace("ws://", "").Replace("wss://", "");
+                string wsUri = $"ws://{cleanIp}:{port}/mqtt"; 
+                
+                mqttClientOptionsBuilder = mqttClientOptionsBuilder
+                    .WithWebSocketServer(o => o.WithUri(wsUri));
             }
             else
             {
                 mqttClientOptionsBuilder = mqttClientOptionsBuilder.WithTcpServer(ipAddress, port);
+            }
+
+            if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password))
+            {
+                mqttClientOptionsBuilder = mqttClientOptionsBuilder.WithCredentials(Username, Password);
             }
 
             var mqttClientOptions = mqttClientOptionsBuilder.Build();

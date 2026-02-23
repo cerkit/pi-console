@@ -222,6 +222,7 @@ namespace PiConsole
                         catch (Exception ex) 
                         {
                             _lastStatusContent = $"[red]MQTT connection failed:[/] {Markup.Escape(ex.Message)}";
+                            System.IO.File.WriteAllText("mqtt_error.txt", ex.ToString());
                             _refreshUi?.Invoke();
                         }
                     });
