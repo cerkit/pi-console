@@ -33,11 +33,17 @@ namespace PiConsole
 
             string ipAddress = "127.0.0.1"; // default
             int port = 1883; // default
-            string secretsPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".secrets", "secrets.json");
-            if (!File.Exists(secretsPath))
+            string secretsPath = Path.Combine(".secrets", "secrets.json");
+            var currentDir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (currentDir != null)
             {
-                // Fallback to relative if running in different environment
-                secretsPath = Path.Combine(".secrets", "secrets.json");
+                var potentialPath = Path.Combine(currentDir.FullName, ".secrets", "secrets.json");
+                if (File.Exists(potentialPath))
+                {
+                    secretsPath = potentialPath;
+                    break;
+                }
+                currentDir = currentDir.Parent;
             }
 
             if (File.Exists(secretsPath))
@@ -52,12 +58,21 @@ namespace PiConsole
                 {
                     port = portProp.GetInt32();
                 }
+                if (document.RootElement.TryGetProperty("Username", out var userProp))
+                {
+                    Username = userProp.GetString() ?? Username;
+                }
+                if (document.RootElement.TryGetProperty("Password", out var pwdProp))
+                {
+                    Password = pwdProp.GetString() ?? Password;
+                }
             }
 
             if (!string.IsNullOrEmpty(OverrideMqttServer)) ipAddress = OverrideMqttServer;
             if (OverrideMqttPort.HasValue) port = OverrideMqttPort.Value;
 
-            var mqttClientOptionsBuilder = new MqttClientOptionsBuilder();
+            var mqttClientOptionsBuilder = new MqttClientOptionsBuilder()
+                .WithClientId(ClientId);
             
             if (UseWebSocket || ipAddress.StartsWith("ws://") || ipAddress.StartsWith("wss://"))
             {

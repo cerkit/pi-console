@@ -19,8 +19,6 @@ namespace PiConsole
                         service.UseWebSocket = true;
                         service.OverrideMqttServer = "localhost";
                         service.OverrideMqttPort = 9001;
-                        service.Username = hostContext.Configuration["Mqtt:Username"];
-                        service.Password = hostContext.Configuration["Mqtt:Password"];
                         return service;
                     });
                     services.AddSingleton<Engine>();

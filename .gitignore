@@ -16,5 +16,6 @@ Pi.Shared/obj/
 pi-console/bin/
 pi-console/obj/
 *.log
+mqtt_error.txt
 appsettings.Development.json
 appsettings.*.json
