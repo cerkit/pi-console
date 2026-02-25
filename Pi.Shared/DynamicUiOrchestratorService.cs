@@ -28,6 +28,8 @@ namespace PiConsole
 
             _mqttService.TopicMessageReceived += async (sender, e) =>
             {
+                _uiService.UpdatePanel("statusPanel", $"Msg on: {e.Topic}");
+
                 if (e.Topic == $"pi-console/handshake/{_mqttService.ClientId}")
                 {
                     try
@@ -46,6 +48,8 @@ namespace PiConsole
                             string? channel = channelElement.GetString();
                             if (!string.IsNullOrEmpty(channel))
                             {
+                                _uiService.UpdatePanel("statusPanel", $"Received INIT on: {e.Topic}");
+
                                 // Subscribe dynamically to the dynamic menu channel
                                 await _mqttService.SubscribeAsync(channel);
 
@@ -56,6 +60,8 @@ namespace PiConsole
                                 var readyResponse = new { status = "READY" };
                                 var jsonReady = JsonSerializer.Serialize(readyResponse);
                                 await _mqttService.PublishAsync(channel, jsonReady);
+                                
+                                _uiService.UpdatePanel("statusPanel", $"Subscribed to {channel}");
                             }
                         }
                     }

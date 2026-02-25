@@ -17,7 +17,7 @@ namespace PiConsole
                         var service = new MqttService();
                         service.ClientId = "pi-console";
                         service.UseWebSocket = true;
-                        service.OverrideMqttServer = "localhost";
+                        service.OverrideMqttServer = "127.0.0.1";
                         service.OverrideMqttPort = 9001;
                         return service;
                     });
