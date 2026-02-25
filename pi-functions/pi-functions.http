@@ -1,0 +1,6 @@
+#@pi_functions_HostAddress = http://localhost:5111
+#
+#GET {{pi_functions_HostAddress}}/weatherforecast/
+#Accept: application/json
+
+###

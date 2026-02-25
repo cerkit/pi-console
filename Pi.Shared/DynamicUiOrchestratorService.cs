@@ -3,8 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using PiConsole.Models;
-using Spectre.Console;
+using Pi.Shared.Models;
 
 namespace PiConsole
 {
@@ -116,7 +115,7 @@ namespace PiConsole
                                 }
                                 else
                                 {
-                                    _uiService.UpdatePanel("outputPanel", $"[red]Failed to parse PanelUpdate:[/] JSON: {Markup.Escape(rawJson)}");
+                                    _uiService.UpdatePanel("outputPanel", $"[red]Failed to parse PanelUpdate:[/] JSON: {rawJson.Replace("[", "[[").Replace("]", "]]")}");
                                 }
                             }
                         }
@@ -124,7 +123,7 @@ namespace PiConsole
                     catch (Exception ex)
                     {
                         // Fallback debug to status
-                        _uiService.UpdatePanel("outputPanel", $"[red]Parser Err:[/] {Markup.Escape(ex.Message)}");
+                        _uiService.UpdatePanel("outputPanel", $"[red]Parser Err:[/] {ex.Message.Replace("[", "[[").Replace("]", "]]")}");
                     }
                 }
             };

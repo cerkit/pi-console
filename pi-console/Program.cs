@@ -25,12 +25,10 @@ namespace PiConsole
                     services.AddSingleton<IUiService>(sp => sp.GetRequiredService<Engine>());
 
                     // Register background services
-                    // PiCalculusActorService is obsolete, using DynamicUiOrchestratorService
                     services.AddHostedService<DynamicUiOrchestratorService>();
                 })
                 .Build();
 
-            // Start the host which spins up PiCalculusActorService in the background
             await host.StartAsync();
 
             // Run our main terminal UI loop

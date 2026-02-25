@@ -1,10 +1,11 @@
 ![Pi Calculus](images/pi-calc-banner.png)
 # pi-console & pi-wasm
 
-This solution contains two thin client applications built around a shared orchestration layer utilizing **MQTT "channel mobility" (Pi Calculus)** for dynamic UI generation:
+This solution contains two thin client applications and a backend API, built around a shared orchestration layer utilizing **MQTT "channel mobility" (Pi Calculus)** for dynamic UI generation:
 
 1. **`pi-console`**: A .NET 10 console application that emulates the look and feel of a classic Bulletin Board System layout, built with a modern static approach using `Spectre.Console`.
 2. **`pi-wasm`**: A .NET 10 Blazor WebAssembly application that replicates the exact same BBS interface within a web browser, communicating directly over secure WebSockets.
+3. **`pi-functions`**: A .NET 10 Minimal API that acts as a serverless-style backend, persisting Pi Calculus session states to a PostgreSQL database using native JSONB columns.
 
 ---
 
@@ -111,7 +112,10 @@ This application utilizes a "channel mobility" system for MQTT communication. Al
 - **Pi.Shared**: Class Library for Shared Domain Models and Services.
 - **pi-console**: CLI built using `Spectre.Console` layout management and widgets.
 - **pi-wasm**: Browser client built using `Blazor WebAssembly`.
+- **pi-functions**: Minimal API for state persistence handling HTTP requests from Node-RED.
 - **MQTTnet**: Used for remote telemetry, supporting both TCP sockets and WebSockets.
+- **PostgreSQL**: Used for storing Pi Calculus session data via Entity Framework Core.
+- **Podman / Docker Compose**: Orchestrates the local containers (Mosquitto, Node-RED, Postgres, and pi-functions).
 
 ## Standard AI Development Prompt
 ```

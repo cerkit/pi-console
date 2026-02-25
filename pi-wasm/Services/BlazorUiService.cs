@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PiConsole;
-using PiConsole.Models;
+using Pi.Shared.Models;
 
 namespace pi_wasm.Services
 {
