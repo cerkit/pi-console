@@ -1,5 +1,5 @@
 using System;
-using PiConsole.Models;
+using Pi.Shared.Models;
 
 namespace PiConsole
 {

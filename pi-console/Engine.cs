@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Spectre.Console;
 using Spectre.Console.Rendering;
-using PiConsole.Models;
+using Pi.Shared.Models;
 
 namespace PiConsole
 {

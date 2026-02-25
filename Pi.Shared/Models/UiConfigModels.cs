@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PiConsole.Models
+namespace Pi.Shared.Models
 {
     public class PiSessionMessage
     {
