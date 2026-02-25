@@ -1,0 +1,637 @@
+[
+    {
+        "id": "3b56adb2f3e3f5a9",
+        "type": "tab",
+        "label": "Startup",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3d75251ef0c130f7",
+        "type": "tab",
+        "label": "Main Orchestration Flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3bd7e13ba885adf5",
+        "type": "tab",
+        "label": "Log Handshakes",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "320b55905b64e9ab",
+        "type": "tab",
+        "label": "Map Actions",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "26de6532b290a5e4",
+        "type": "mqtt-broker",
+        "name": "Local MQTT",
+        "broker": "mosquitto",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "inject_pi_menu",
+        "type": "inject",
+        "z": "3b56adb2f3e3f5a9",
+        "name": "Initiate Menu Handshake",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 290,
+        "y": 220,
+        "wires": [
+            [
+                "func_menu_handshake"
+            ]
+        ]
+    },
+    {
+        "id": "func_menu_handshake",
+        "type": "function",
+        "z": "3b56adb2f3e3f5a9",
+        "name": "Inititate Session Channel (νz)",
+        "func": "// Node Name: Initiate Session Channel (νz)\n\n// Fallback to \"default\" if the client doesn't provide an ID\nconst clientId = msg.payload.clientId || \"default\";\n\n// Embed the clientId into the private channel path\nconst dynamicChannel = `pi-console/session/setup/${clientId}/${msg._msgid}`;\n\n// Target the handshake specifically to this client\nmsg.topic = `pi-console/handshake/${clientId}`;\nmsg.payload = {\n    action: \"INITIATE_SESSION\",\n    channel: dynamicChannel\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 220,
+        "wires": [
+            [
+                "mqtt_out_public",
+                "7a585de1b22c886e"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_public",
+        "type": "mqtt out",
+        "z": "3b56adb2f3e3f5a9",
+        "name": "Publish Handshake",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "26de6532b290a5e4",
+        "x": 810,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "mqtt_in_startup",
+        "type": "mqtt in",
+        "z": "3b56adb2f3e3f5a9",
+        "name": "Listen for Client Startup",
+        "topic": "pi-console/client/startup",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "26de6532b290a5e4",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 280,
+        "y": 180,
+        "wires": [
+            [
+                "func_menu_handshake"
+            ]
+        ]
+    },
+    {
+        "id": "7a585de1b22c886e",
+        "type": "debug",
+        "z": "3b56adb2f3e3f5a9",
+        "name": "debug 1",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "7e17443609a729b4",
+        "type": "comment",
+        "z": "3b56adb2f3e3f5a9",
+        "name": "Startup",
+        "info": "When an app first launches, it sends a message on this topic and awaits commands.",
+        "x": 190,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "mqtt_in_session",
+        "type": "mqtt in",
+        "z": "3d75251ef0c130f7",
+        "name": "Listen to Session Channel",
+        "topic": "pi-console/session/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "26de6532b290a5e4",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 290,
+        "y": 280,
+        "wires": [
+            [
+                "func_extract_client"
+            ]
+        ]
+    },
+    {
+        "id": "func_extract_client",
+        "type": "function",
+        "z": "3d75251ef0c130f7",
+        "name": "Extract Client ID",
+        "func": "// Extract topic parts: pi-console/session/setup/{clientId}/{uuid}\nconst parts = msg.topic.split('/');\nmsg.clientId = parts[3] || \"default\";\n\n// Save the original payload status (READY or UI_READY)\nmsg.clientState = msg.payload.status;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 280,
+        "wires": [
+            [
+                "read_config_file",
+                "8dd96314b5783c55"
+            ]
+        ]
+    },
+    {
+        "id": "read_config_file",
+        "type": "file in",
+        "z": "3d75251ef0c130f7",
+        "name": "Load configs.json",
+        "filename": "/data/pi-console-configs.json",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 710,
+        "y": 280,
+        "wires": [
+            [
+                "parse_json"
+            ]
+        ]
+    },
+    {
+        "id": "parse_json",
+        "type": "json",
+        "z": "3d75251ef0c130f7",
+        "name": "Parse JSON",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 890,
+        "y": 280,
+        "wires": [
+            [
+                "switch_state_router"
+            ]
+        ]
+    },
+    {
+        "id": "switch_state_router",
+        "type": "switch",
+        "z": "3d75251ef0c130f7",
+        "name": "Route State",
+        "property": "clientState",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "READY",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "UI_READY",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 290,
+        "y": 380,
+        "wires": [
+            [
+                "func_build_ui"
+            ],
+            [
+                "func_build_menu"
+            ]
+        ]
+    },
+    {
+        "id": "func_build_ui",
+        "type": "function",
+        "z": "3d75251ef0c130f7",
+        "name": "Serve Targeted UI Config",
+        "func": "const configs = msg.payload;\nconst clientId = msg.clientId;\n\n// Fallback to default if client ID isn't in the JSON file\nconst clientConfig = configs[clientId] || configs[\"default\"];\n\nmsg.payload = {\n    messageType: \"UiConfig\",\n    data: clientConfig.uiConfig\n};\n\n// msg.topic is already the correct private session channel\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 360,
+        "wires": [
+            [
+                "mqtt_out_session"
+            ]
+        ]
+    },
+    {
+        "id": "func_build_menu",
+        "type": "function",
+        "z": "3d75251ef0c130f7",
+        "name": "Serve Targeted Menu",
+        "func": "const configs = msg.payload;\nconst clientId = msg.clientId;\n\n// Fallback to default if client ID isn't in the JSON file\nconst clientConfig = configs[clientId] || configs[\"default\"];\n\nmsg.payload = {\n    messageType: \"Menu\",\n    data: clientConfig.menu\n};\n\n// msg.topic is already the correct private session channel\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 420,
+        "wires": [
+            [
+                "mqtt_out_session"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_session",
+        "type": "mqtt out",
+        "z": "3d75251ef0c130f7",
+        "name": "Publish to Session",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "26de6532b290a5e4",
+        "x": 770,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "8dd96314b5783c55",
+        "type": "debug",
+        "z": "3d75251ef0c130f7",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 680,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "79b2e1ce97884b59",
+        "type": "mqtt in",
+        "z": "3bd7e13ba885adf5",
+        "name": "Handshake Message",
+        "topic": "pi-console/handshake/#",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "26de6532b290a5e4",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 180,
+        "y": 200,
+        "wires": [
+            [
+                "11b1b22b302a3d94"
+            ]
+        ]
+    },
+    {
+        "id": "11b1b22b302a3d94",
+        "type": "function",
+        "z": "3bd7e13ba885adf5",
+        "name": "Map Payload",
+        "func": "// 1. Ensure we have an object to work with, even if the MQTT payload is empty\nlet data = msg.payload;\n\nif (typeof data === 'string') {\n    try {\n        data = JSON.parse(data || \"{}\");\n    } catch (e) {\n        data = {}; // If it's completely empty like your debug shows, default to an empty object\n    }\n}\n\n// 2. Map exactly to your .NET SessionState class properties\nmsg.payload = {\n    clientId: data.clientId || \"M5-Terminal-Alpha\", // Fallback so EF Core doesn't crash on empty\n    status: data.status || \"HANDSHAKE_RECEIVED\",\n    activeChannel: data.sessionChannel || \"pending\",\n    // PostgreSQL jsonb expects a stringified JSON object\n    currentUiState: JSON.stringify(data.ui || { \"connected\": true })\n};\n\n// 3. THIS IS THE MAGIC FIX: Tell the .NET API to expect JSON!\nmsg.headers = {\n    \"Content-Type\": \"application/json\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 200,
+        "wires": [
+            [
+                "e0215d23b5b8caae"
+            ]
+        ]
+    },
+    {
+        "id": "e0215d23b5b8caae",
+        "type": "http request",
+        "z": "3bd7e13ba885adf5",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://pi-functions:8080/api/state",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 590,
+        "y": 200,
+        "wires": [
+            [
+                "d140524f7ceaafb7"
+            ]
+        ]
+    },
+    {
+        "id": "d140524f7ceaafb7",
+        "type": "debug",
+        "z": "3bd7e13ba885adf5",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "mqtt_in_actions",
+        "type": "mqtt in",
+        "z": "320b55905b64e9ab",
+        "name": "Listen for Actions",
+        "topic": "pi-console/action/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "26de6532b290a5e4",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 180,
+        "y": 200,
+        "wires": [
+            [
+                "switch_action_router"
+            ]
+        ]
+    },
+    {
+        "id": "switch_action_router",
+        "type": "switch",
+        "z": "320b55905b64e9ab",
+        "name": "Route Action",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "pi-console/action/status",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/network",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/sensors",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/settings",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "pi-console/action/restart",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 5,
+        "x": 390,
+        "y": 200,
+        "wires": [
+            [
+                "func_process_status"
+            ],
+            [
+                "func_process_network"
+            ],
+            [
+                "bf85e6680d616390"
+            ],
+            [
+                "ddcd28dbe14a7aee"
+            ],
+            [
+                "3ab8b165edc077f2"
+            ]
+        ]
+    },
+    {
+        "id": "func_process_status",
+        "type": "function",
+        "z": "320b55905b64e9ab",
+        "name": "Process System Status",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"[green]System Status: ONLINE[/]\\nCPU Usage: 42%\\nMemory: 2.1GB / 8.0GB\\nUptime: 14 Days, 2 Hrs\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"outputPanel\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 160,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "func_process_network",
+        "type": "function",
+        "z": "320b55905b64e9ab",
+        "name": "Process Network Config",
+        "func": "const replyChannel = msg.payload.sessionChannel;\n\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"operationsPanel\",\n        content: \"[blue]Network Interfaces:[/]\\neth0: localhost\\nwlan0: Disconnected\"\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 200,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_action_reply",
+        "type": "mqtt out",
+        "z": "320b55905b64e9ab",
+        "name": "Send Panel Update to Session",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "26de6532b290a5e4",
+        "x": 1030,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "bf85e6680d616390",
+        "type": "function",
+        "z": "320b55905b64e9ab",
+        "name": "Process Sensor Status",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"[green]Sensor Status: ENABLED[/]\\nHumidity: 12%\\nTemperature: 31℉\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"outputPanel\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 240,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "ddcd28dbe14a7aee",
+        "type": "function",
+        "z": "320b55905b64e9ab",
+        "name": "Process Settings",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"[green]Node-RED: CONFIGURED[/]\\nClient-UI: CONFIGURED\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"outputPanel\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 280,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    },
+    {
+        "id": "3ab8b165edc077f2",
+        "type": "function",
+        "z": "320b55905b64e9ab",
+        "name": "Process Restart",
+        "func": "// Extract the private channel sent by the client\nconst replyChannel = msg.payload.sessionChannel;\n\n// Execute your arbitrary logic here (e.g., API calls, reading sensors)\nconst systemData = \"RESTART\";\n\n// Route the response back to the specific client session\nmsg.topic = replyChannel;\nmsg.payload = {\n    messageType: \"PanelUpdate\",\n    data: {\n        targetPanel: \"commandProcessor\",\n        content: systemData\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 320,
+        "wires": [
+            [
+                "mqtt_out_action_reply"
+            ]
+        ]
+    }
+]
